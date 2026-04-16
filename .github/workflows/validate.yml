@@ -1,0 +1,53 @@
+name: Validate Rules
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        elixir: ['1.16', '1.17', '1.18']
+        otp: ['26.0', '27.0']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+            ~/.cache/mix/installs
+          key: ${{ runner.os }}-mix-${{ matrix.elixir }}-${{ matrix.otp }}-${{ hashFiles('mix.lock') }}
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Validate rules
+        run: mix validate_rules
+
+      - name: Run tests
+        run: mix test
+
+      - name: Generate TOC
+        run: mix generate_toc
+
+      - name: Check TOC is up to date
+        run: git diff --exit-code toc/
+
+      - name: Check rules
+        run: mix check_rules
+        timeout-minutes: 30

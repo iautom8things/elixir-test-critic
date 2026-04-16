@@ -1,0 +1,24 @@
+{
+  "name": "elixir-test-critic",
+  "version": "0.1.0",
+  "description": "Elixir/ExUnit test quality expert backed by 81+ curated testing rules grounded in Elixir community testing philosophy.",
+  "author": {
+    "name": "Manuel Zubieta"
+  },
+  "homepage": "https://github.com/iautom8things/elixir-test-critic",
+  "license": "MIT",
+  "keywords": [
+    "elixir",
+    "exunit",
+    "testing",
+    "ecto",
+    "phoenix",
+    "liveview",
+    "otp",
+    "mox",
+    "oban",
+    "absinthe",
+    "broadway",
+    "telemetry"
+  ]
+}
