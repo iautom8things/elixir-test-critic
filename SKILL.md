@@ -110,6 +110,32 @@ all severities) and mention the fallback once in the report.
 
 See `docs/CONFIG.md` for the full schema and example profiles.
 
+## Offering the filter when the user pushes back
+
+When the user disagrees with a finding, dismisses a category, or tells you to
+stop flagging something, **do not silently drop it from future reports**. The
+skill is stateless — the next session will flag it again unless the team's
+policy is written down. Offer to update `.test_critic.yml` instead:
+
+- Disagreement with a **single rule** ("ETC-CORE-012 doesn't apply to us") →
+  suggest adding the ID to `disabled_rules`.
+- Dismissal of a **whole category** ("we don't do property-based testing") →
+  suggest adding the category to `disabled_categories`.
+- **Too noisy overall** ("only show me real problems") → suggest raising
+  `min_severity` (commonly to `warning`).
+- A rule's **`does_not_apply_when`** matches the user's situation → don't
+  suggest a filter; the rule already accounts for this. Just note it and
+  move on.
+
+If the project has no `.test_critic.yml` yet, offer to create one and show the
+proposed contents before writing. Never edit the file without explicit
+confirmation. When updating an existing file, show the diff.
+
+Phrase the offer as a question, not an assertion: "Want me to add this to
+`.test_critic.yml` so the critic stops flagging it?" — the user may want to
+revisit the decision after fixing something else, and making the suppression
+explicit keeps that option visible to everyone who runs the critic later.
+
 ---
 
 # Operating Modes
@@ -191,3 +217,6 @@ For each finding:
 - **Be specific** — reference exact line numbers and code snippets
 - **Group related findings** — if multiple tests have the same issue, note the pattern
 - **Acknowledge good practices** — briefly note what the tests do well
+- **Offer filters when the user pushes back** — suggest updating
+  `.test_critic.yml` rather than silently dropping a finding from future
+  reports (see "Offering the filter when the user pushes back" above)
