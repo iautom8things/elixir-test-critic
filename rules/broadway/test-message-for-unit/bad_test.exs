@@ -1,8 +1,11 @@
-# EXPECTED: passes
+# EXPECTED: flaky
 # BAD PRACTICE: Testing pipeline message handling without pinning the ref,
 # or using Process.sleep instead of assert_receive.
 # These tests demonstrate fragile patterns — they may pass coincidentally but
-# can produce false positives or race conditions in real pipelines.
+# can produce false positives or race conditions in real pipelines. The
+# EXPECTED marker is "flaky" because that is literally the point: under CI
+# load the race condition manifests and the test fails, exactly as the rule
+# warns.
 Mix.install([])
 
 ExUnit.start(autorun: true)
