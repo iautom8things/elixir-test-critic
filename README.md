@@ -87,6 +87,27 @@ To uninstall:
 /plugin uninstall elixir-test-critic
 ```
 
+## Configuring the critic per project
+
+Drop a `.test_critic.yml` next to your `mix.exs` and the critic will read it
+before every review:
+
+```yaml
+min_severity: warning           # critical | warning | recommendation | style
+disabled_categories: [property, broadway]
+disabled_rules: [ETC-CORE-012]
+```
+
+- `min_severity` — ignore findings below this bar. Order is `critical` >
+  `warning` > `recommendation` > `style`.
+- `disabled_categories` — turn off entire categories (e.g. you haven't adopted
+  property-based testing yet, or you don't use Broadway).
+- `disabled_rules` — turn off specific rule IDs even if the category stays on.
+
+All three fields are optional. Missing or malformed file means "use defaults"
+(report every rule at every severity). See `docs/CONFIG.md` for the full schema
+and example profiles.
+
 ## Setup
 
 ```bash
