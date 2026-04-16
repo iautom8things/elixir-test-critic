@@ -1,27 +1,44 @@
 # Elixir Test Critic
 
-A curated knowledge base of idiomatic Elixir testing rules, grounded in the
-Elixir community's testing philosophy.
+A testing knowledge base for Elixir where the rules can't rot into lies and
+can't quietly turn into one person's preferences.
 
-## What This Is
+## Why it exists
 
-A collection of self-contained, opinionated testing rules organized by category.
-Each rule includes:
+Most "testing best practices" docs are blog posts. They go stale, the examples
+stop working against current dependencies, and nobody notices because nobody's
+running them. This repo is shaped to avoid that.
 
-- **RULE.md** — The rule document with YAML frontmatter, problem description, detection hints, and code examples
-- **good_test.exs** — A runnable script demonstrating the recommended pattern (must exit 0)
-- **bad_test.exs** — A runnable script demonstrating the anti-pattern
+Every rule is executable. Every rule has to trace back to a principle. The whole
+corpus is validated by CI on every push. The rules get treated like a library —
+if they regress, the build breaks.
 
-Every example script is fully self-contained via `Mix.install/1` — run it with
-`elixir rules/core/start-supervised/good_test.exs` from a bare Elixir install.
+## How it's built
 
-## Two Consumption Patterns
+**Rules are data.** Each rule lives in its own directory with a `RULE.md` (YAML
+frontmatter: `id`, `category`, `severity`, `principles`, `applies_when`) plus
+two scripts: `good_test.exs` showing the recommended pattern and `bad_test.exs`
+showing the anti-pattern. Both run from a bare Elixir install via
+`Mix.install/1`.
 
-**Criticism mode:** Fan out sub-agents per category, each evaluating rules against
-test code. Output: pass/fail per rule with suggested fixes.
+**CI runs all of them.** `mix check_rules` executes all 162 example scripts on
+every push, across a matrix of Elixir 1.16–1.18 and OTP 26–27. A regression
+against a new Elixir version, a dependency bump, or an OTP change breaks the
+build. There's nowhere for rot to hide.
 
-**Generation mode:** Load the auto-generated `toc/RULES_REFERENCE.md` as context
-when writing tests. The condensed reference helps produce tests that follow all rules.
+**Nothing ships without a principle.** Ten foundational principles form the
+trunk — purity separation, async default, assert-don't-sleep, and so on. Every
+new rule cites at least one. That's how the corpus stays out of the "I just
+like it this way" swamp.
+
+**Severity is strict.** `critical` is reserved for rules that catch real test
+bugs: flakiness, false positives, missed regressions. `warning`,
+`recommendation`, and `style` absorb everything else. Filter by severity and
+the result is trustworthy.
+
+**One artifact, two audiences.** The same rules feed a Claude Code skill for
+LLM-driven test review and generation, and serve as docs a human can browse on
+GitHub. No second copy to keep in sync.
 
 ## Structure
 
