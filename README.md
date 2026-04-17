@@ -85,7 +85,6 @@ Each rule is a directory with a `RULE.md` — YAML frontmatter (`id`,
 `category`, `severity`, `principles`, `applies_when`) plus prose and
 citations — alongside `good_test.exs` and `bad_test.exs`. Both scripts run
 from a bare Elixir install via `Mix.install/1`.
-required.
 
 ## How the corpus stays honest
 
