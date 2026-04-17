@@ -91,7 +91,7 @@ mix test                   # Project tests (mix task internals)
 - Run `mix test` after changes.
 - If behavior of `validate_rules` or `check_rules` changes, verify CI still
   passes — `.github/workflows/validate.yml` runs the full suite across
-  Elixir 1.16-1.18 and OTP 26-27.
+  Elixir 1.16-1.19 and OTP 26-28.
 
 ## Style Guardrails
 
