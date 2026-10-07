@@ -13,6 +13,10 @@ Absinthe GraphQL, Broadway pipelines, and Telemetry events.
 
 The knowledge base lives alongside this skill at `${CLAUDE_SKILL_DIR}`.
 
+If `${CLAUDE_SKILL_DIR}/toc/RULES_REFERENCE.md` cannot be read, say so in the
+first line of your reply, name the path you tried, and stop. Do not review
+from memory, and do not cite a rule ID you have not read.
+
 ---
 
 # Foundational Principles

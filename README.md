@@ -29,6 +29,24 @@ discuss Elixir tests. You can also invoke it explicitly:
 /elixir-test-critic review test/my_app/accounts_test.exs
 ```
 
+The plugin also ships an `elixir-test-critic` agent for delegated reviews. It
+loads the same skill and reads the same rule files, so another agent or
+workflow can hand it a test file or a diff and get back cited findings.
+
+To install it on every machine from a shared `~/.claude/settings.json`,
+declare the marketplace and enable the plugin there:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "elixir-test-critic": {
+      "source": { "source": "github", "repo": "iautom8things/elixir-test-critic" }
+    }
+  },
+  "enabledPlugins": { "elixir-test-critic@elixir-test-critic": true }
+}
+```
+
 Update later with `/plugin marketplace update elixir-test-critic`, remove with
 `/plugin uninstall elixir-test-critic`.
 
