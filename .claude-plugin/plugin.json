@@ -1,7 +1,7 @@
 {
   "name": "elixir-test-critic",
-  "version": "0.2.0",
-  "description": "Elixir/ExUnit test quality expert backed by 81+ curated testing rules grounded in Elixir community testing philosophy.",
+  "version": "0.3.0",
+  "description": "Elixir/ExUnit test quality expert backed by 85 curated testing rules grounded in Elixir community testing philosophy.",
   "author": {
     "name": "Manuel Zubieta"
   },
