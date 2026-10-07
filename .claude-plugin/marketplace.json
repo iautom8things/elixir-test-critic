@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "elixir-test-critic",
+  "owner": { "name": "Manuel Zubieta", "email": "i@autom8things.com", "url": "https://github.com/iautom8things" },
+  "description": "Elixir Test Critic: an ExUnit review skill and agent backed by a curated rule knowledge base. This repo is the plugin and its own marketplace.",
+  "plugins": [
+    {
+      "name": "elixir-test-critic",
+      "source": "./",
+      "description": "Elixir/ExUnit test quality expert backed by 81+ curated testing rules grounded in Elixir community testing philosophy.",
+      "version": "0.2.0",
+      "author": { "name": "Manuel Zubieta", "email": "i@autom8things.com" },
+      "homepage": "https://github.com/iautom8things/elixir-test-critic",
+      "repository": "https://github.com/iautom8things/elixir-test-critic",
+      "license": "MIT",
+      "keywords": ["elixir", "exunit", "testing", "ecto", "phoenix", "liveview", "otp", "mox", "oban", "absinthe", "broadway", "telemetry"],
+      "category": "development"
+    }
+  ]
+}
