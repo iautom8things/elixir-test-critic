@@ -16,6 +16,7 @@ applies_when:
   - "Tests that need to verify concurrent database access patterns"
 related_rules:
   - ETC-ECTO-009
+  - ETC-ISO-006
 ---
 
 # Choose sandbox mode and ownership based on process needs

@@ -13,6 +13,8 @@ applies_when:
   - "A GenServer uses Process.send_after or :timer.send_interval for periodic work"
   - "Tests must wait real wall-clock time to observe periodic behaviour"
   - "The periodic interval is long enough to slow down tests meaningfully"
+related_rules:
+  - ETC-CORE-011
 ---
 
 # Inject controllable time for periodic processes

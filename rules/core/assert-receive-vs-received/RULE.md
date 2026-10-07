@@ -20,6 +20,8 @@ related_rules:
   - ETC-BWAY-002
   - ETC-BWAY-003
   - ETC-TELE-002
+  - ETC-MOCK-010
+  - ETC-CORE-011
 ---
 
 # Use assert_receive for async, assert_received for sync

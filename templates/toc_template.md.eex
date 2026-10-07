@@ -44,3 +44,5 @@
 **Testing an Oban worker?** Start with: oban/perform-job-for-unit, oban/assert-enqueued-for-integration
 
 **Writing property tests?** Start with: property/when-to-use-properties, property/roundtrip-properties
+
+**Chasing a flaky test?** Start with: isolation/stop-indirectly-started-processes, mocking/pin-global-stub-reports, telemetry/filter-events-by-origin, core/deadline-excludes-setup, core/assert-receive-vs-received

@@ -20,3 +20,4 @@ in projects using Ecto, where the database is the most common source of shared s
 | ETC-ISO-003 | no-shared-ets-async | Do not share ETS/persistent_term in async tests | critical |
 | ETC-ISO-004 | sandbox-ownership-strategy | Choose sandbox mode and ownership based on process needs | warning |
 | ETC-ISO-005 | on-exit-process-boundary | on_exit runs in a separate process | warning |
+| ETC-ISO-006 | stop-indirectly-started-processes | Stop processes the code under test starts under app supervisors | critical |

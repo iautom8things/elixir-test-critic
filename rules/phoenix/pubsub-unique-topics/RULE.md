@@ -13,6 +13,8 @@ applies_when:
   - "PubSub tests running with async: true"
   - "Any test that subscribes to a Phoenix.PubSub topic"
   - "Tests that broadcast messages and use assert_receive"
+related_rules:
+  - ETC-TELE-005
 ---
 
 # Use unique topic names in async PubSub tests

@@ -19,6 +19,7 @@ These rules encode that philosophy and the practical patterns that flow from it.
 | ETC-MOCK-007 | [prefer-dependency-injection](prefer-dependency-injection/RULE.md) | recommendation | Prefer dependency injection over application config |
 | ETC-MOCK-008 | [integration-test-per-mock](integration-test-per-mock/RULE.md) | warning | Write at least one integration test per mocked boundary |
 | ETC-MOCK-009 | [dont-mock-pure-functions](dont-mock-pure-functions/RULE.md) | warning | Don't mock your own pure functions |
+| ETC-MOCK-010 | [pin-global-stub-reports](pin-global-stub-reports/RULE.md) | warning | Make global-mode stubs report an id the test owns |
 
 ## Key Principles
 

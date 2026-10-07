@@ -12,6 +12,7 @@ principles:
   - thin-processes
 related_rules:
   - ETC-OTP-003
+  - ETC-ISO-006
 applies_when:
   - "Any test that starts a GenServer, Agent, Task, or other long-lived process"
   - "Any test that needs a supervised process that should not outlive the test"
@@ -46,6 +47,12 @@ one that created the problem.
 - `GenServer.start_link` or `Agent.start_link` in test body or setup without `start_supervised`
 - `{:ok, pid} = MyServer.start_link(...)` in a test (should be `start_supervised!(MyServer, ...)`)
 - Missing `on_exit` cleanup for processes started with `start_link`
+- `on_exit(fn -> if Process.alive?(pid), do: GenServer.stop(pid) end)`: the
+  process can die between the check and the stop, and `GenServer.stop/3` then
+  exits the callback with `:noproc`. `start_supervised!` handles a child that
+  is already gone.
+- A process the code under test starts under an application supervisor is out
+  of `start_supervised`'s reach; see ETC-ISO-006
 
 ## Bad
 

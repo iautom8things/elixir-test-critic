@@ -14,6 +14,8 @@ applies_when:
   - "Any test suite that uses Mox for dependency mocking"
 does_not_apply_when:
   - "Using Mox.stub/3 where you explicitly don't want call count verification"
+related_rules:
+  - ETC-MOCK-010
 ---
 
 # Always verify mock expectations

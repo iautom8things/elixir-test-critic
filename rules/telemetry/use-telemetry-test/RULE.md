@@ -19,6 +19,7 @@ related_rules:
   - ETC-TELE-002
   - ETC-TELE-003
   - ETC-TELE-004
+  - ETC-TELE-005
 ---
 
 # Use :telemetry_test.attach_event_handlers/2
@@ -27,15 +28,15 @@ The `:telemetry` package ships a test helper module, `:telemetry_test`, that
 provides the `attach_event_handlers/2` function. This is the idiomatic way to
 capture telemetry events in ExUnit tests. Using it avoids hand-rolled handler
 functions, provides consistent message formatting, and yields a reference that
-lets you match messages precisely even when multiple tests run concurrently.
+tells this handler's messages apart from any other handler's.
 
 ## Why the Official Helper
 
 `attach_event_handlers/2` does three things automatically:
 
 1. Attaches a handler that sends a message to the calling test process.
-2. Returns a `ref` you include in pattern matches so messages from different
-   test setups do not collide.
+2. Returns a `ref` you include in pattern matches, so a message from another
+   handler attached to the same test process cannot match.
 3. Formats every message as `{event_name, ref, measurements, metadata}`, giving
    you a stable shape to assert against.
 
@@ -92,9 +93,16 @@ defmodule MyApp.MetricsTest do
 end
 ```
 
-The `^ref` pin ensures the message belongs to this test's handler, not a
-handler attached by a concurrent test. Cleanup is handled automatically when
-the test process exits (the handler is attached to the test pid's lifetime).
+The `^ref` pin ensures the message came from this handler. It does not ensure
+the **event** came from this test. Handlers are global, so this handler also
+fires when a concurrent async test emits `[:my_app, :purchase, :complete]`, and
+those messages carry the same `ref`. In async tests that refute an event, or
+assert one another test could also produce, filter by the emitting process
+(ETC-TELE-005).
+
+The handler is not detached when the test process exits. The ref is also the
+handler id, so detach it with `on_exit(fn -> :telemetry.detach(ref) end)`
+(ETC-TELE-003).
 
 ## When This Applies
 

@@ -13,6 +13,8 @@ principles:
 applies_when:
   - "Any test using on_exit to perform cleanup"
   - "on_exit callbacks that need to access database, Mox, or process-specific state"
+related_rules:
+  - ETC-ISO-006
 ---
 
 # on_exit runs in a separate process
