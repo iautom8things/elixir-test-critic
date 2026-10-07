@@ -43,7 +43,7 @@ or clarify that body of knowledge are welcome.
 
 ## Quality Gates
 
-Every pull request runs CI against Elixir 1.16-1.19 and OTP 26-28. The
+Every pull request runs CI against Elixir 1.17-1.19 and OTP 27-28. The
 following must pass:
 
 - `mix validate_rules` — frontmatter and directory structure are valid

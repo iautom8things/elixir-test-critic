@@ -6,8 +6,8 @@ Elixir testing rules that actually run.
 
 81 rules across 14 categories, each paired with a runnable `good_test.exs`
 and `bad_test.exs` and traced to one of ten foundational principles. CI
-re-executes every example on every push across Elixir 1.16–1.19 and OTP
-26–28.
+re-executes every example on every push across Elixir 1.17–1.19 and OTP
+27–28.
 
 It ships as a [Claude Code][cc] skill so an LLM can use the rules to review
 or write your tests, and reads as plain Markdown if you'd rather browse them
