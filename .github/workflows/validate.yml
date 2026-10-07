@@ -13,10 +13,9 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - elixir: '1.16'
-            otp: '26.0'
           - elixir: '1.17'
             otp: '27.0'
           - elixir: '1.18'
