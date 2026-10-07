@@ -17,6 +17,7 @@ applies_when:
 related_rules:
   - ETC-TELE-001
   - ETC-ISO-001
+  - ETC-TELE-005
   - ETC-ISO-003
 ---
 

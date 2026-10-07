@@ -18,6 +18,7 @@ related_rules:
   - ETC-TELE-001
   - ETC-CORE-004
   - ETC-CORE-005
+  - ETC-TELE-005
   - ETC-TELE-004
 ---
 

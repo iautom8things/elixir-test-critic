@@ -25,3 +25,4 @@ process lifecycle management, file I/O isolation, and doctest boundaries.
 | ETC-CORE-008 | capture-log-async | Use pattern matching with capture_log in async tests | warning |
 | ETC-CORE-009 | use-tmp-dir | Use @tag :tmp_dir for file I/O tests | recommendation |
 | ETC-CORE-010 | doctest-boundaries | Limit doctests to pure functions | recommendation |
+| ETC-CORE-011 | deadline-excludes-setup | Keep setup work outside the deadline a test proves | warning |

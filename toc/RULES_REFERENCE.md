@@ -11,6 +11,7 @@
 | `ETC-CORE-006` | [Use start_supervised for process cleanup](../rules/core/start-supervised/RULE.md) | core |
 | `ETC-ISO-001` | [Never use Application.put_env in async tests](../rules/isolation/no-app-put-env-async/RULE.md) | isolation |
 | `ETC-ISO-003` | [Do not share ETS/persistent_term in async tests](../rules/isolation/no-shared-ets-async/RULE.md) | isolation |
+| `ETC-ISO-006` | [Stop processes the code under test starts under app supervisors](../rules/isolation/stop-indirectly-started-processes/RULE.md) | isolation |
 | `ETC-ISO-002` | [Generate unique values for constrained fields](../rules/isolation/unique-test-data/RULE.md) | isolation |
 | `ETC-ECTO-005` | [Use System.unique_integer for factory unique fields](../rules/ecto/unique-factory-values/RULE.md) | ecto |
 | `ETC-MOCK-001` | [Define a behaviour before creating a mock](../rules/mocking/behaviour-before-mock/RULE.md) | mocking |
@@ -24,6 +25,7 @@
 
 | `ETC-CORE-001` | [Use async: true by default](../rules/core/async-by-default/RULE.md) | core |
 | `ETC-CORE-008` | [Use pattern matching with capture_log in async tests](../rules/core/capture-log-async/RULE.md) | core |
+| `ETC-CORE-011` | [Keep setup work outside the deadline a test proves](../rules/core/deadline-excludes-setup/RULE.md) | core |
 | `ETC-ISO-005` | [on_exit runs in a separate process](../rules/isolation/on-exit-process-boundary/RULE.md) | isolation |
 | `ETC-ISO-004` | [Choose sandbox mode and ownership based on process needs](../rules/isolation/sandbox-ownership-strategy/RULE.md) | isolation |
 | `ETC-ERR-001` | [Use 3-arity assert_raise with message matching](../rules/errors/assert-raise-with-message/RULE.md) | errors |
@@ -39,6 +41,7 @@
 | `ETC-MOCK-009` | [Don't mock your own pure functions](../rules/mocking/dont-mock-pure-functions/RULE.md) | mocking |
 | `ETC-MOCK-008` | [Write at least one integration test per mocked boundary](../rules/mocking/integration-test-per-mock/RULE.md) | mocking |
 | `ETC-MOCK-002` | [Only mock at system boundaries](../rules/mocking/mock-at-boundary-only/RULE.md) | mocking |
+| `ETC-MOCK-010` | [Make global-mode stubs report an id the test owns](../rules/mocking/pin-global-stub-reports/RULE.md) | mocking |
 | `ETC-PHX-004` | [Subscribe and assert_receive for PubSub messages](../rules/phoenix/pubsub-assert-receive/RULE.md) | phoenix |
 | `ETC-PHX-005` | [Use unique topic names in async PubSub tests](../rules/phoenix/pubsub-unique-topics/RULE.md) | phoenix |
 | `ETC-PHX-001` | [Test HTTP responses, not controller internals](../rules/phoenix/test-http-response-not-internals/RULE.md) | phoenix |
@@ -52,6 +55,7 @@
 | `ETC-ABS-004` | [Call Absinthe.Test.prime/1 in test_helper.exs](../rules/absinthe/prime-schema/RULE.md) | absinthe |
 | `ETC-TELE-002` | [Use assert_received for synchronous telemetry events](../rules/telemetry/assert-received-for-sync/RULE.md) | telemetry |
 | `ETC-TELE-003` | [Always detach telemetry handlers after tests](../rules/telemetry/detach-handlers/RULE.md) | telemetry |
+| `ETC-TELE-005` | [Filter telemetry events by origin in async tests](../rules/telemetry/filter-events-by-origin/RULE.md) | telemetry |
 | `ETC-TELE-004` | [Assert event shape, not exact measurement values](../rules/telemetry/test-shape-not-values/RULE.md) | telemetry |
 
 
@@ -69,6 +73,7 @@ Rules in this category cover the foundational practices of writing ExUnit tests 
 | `ETC-CORE-004` | [Use assert_receive for async, assert_received for sync](../rules/core/assert-receive-vs-received/RULE.md) | critical | Use `assert_receive/2` (with a timeout) when the message originates from an asynchronous operation. Use `assert_received/1` (no timeout, immediate check) only when you have already synchronised with the sender and the message is guaranteed to be in the mailbox. |
 | `ETC-CORE-001` | [Use async: true by default](../rules/core/async-by-default/RULE.md) | warning | Every ExUnit test case should use `async: true` unless it genuinely requires exclusive access to shared global state. Sequential tests are a code smell indicating leaked mutable state. |
 | `ETC-CORE-008` | [Use pattern matching with capture_log in async tests](../rules/core/capture-log-async/RULE.md) | warning | When asserting on log output in async tests, use `=~` (substring match) rather than `==` (exact match) with `capture_log`. Spawned processes within the test may emit logs after the capture window closes, making the exact string unpredictable. |
+| `ETC-CORE-011` | [Keep setup work outside the deadline a test proves](../rules/core/deadline-excludes-setup/RULE.md) | warning | A test that proves a timeout should block at the first step the budget covers, not after a handshake that shares the budget. Otherwise a loaded CI runner spends the budget before the blocking step is reached, and the test fails for a reason that has nothing to do with the timeout. |
 | `ETC-CORE-002` | [One describe block per public function](../rules/core/describe-per-function/RULE.md) | style | Group tests for each public function inside a dedicated `describe` block named after that function. This makes it obvious which function is broken when tests fail and keeps the test module navigable as the module under test grows. |
 | `ETC-CORE-010` | [Limit doctests to pure functions](../rules/core/doctest-boundaries/RULE.md) | recommendation | Write doctests only for pure, deterministic functions. Doctests for functions with side effects (database writes, HTTP calls, process interactions) are fragile, hard to maintain, and run without ExUnit's isolation infrastructure. |
 | `ETC-CORE-005` | [Never use Process.sleep for synchronization](../rules/core/no-process-sleep/RULE.md) | critical | Do not use `Process.sleep/1` to wait for asynchronous operations to complete. It creates timing-dependent tests that are flaky under load and arbitrarily slow on fast machines. Use `assert_receive`, `GenServer.call`, or process monitoring instead. |
@@ -88,6 +93,7 @@ Rules in this category address the correctness of concurrent test execution. The
 | `ETC-ISO-003` | [Do not share ETS/persistent_term in async tests](../rules/isolation/no-shared-ets-async/RULE.md) | critical | Do not write to named ETS tables or `persistent_term` values in async tests. Both are global, VM-wide mutable stores. Writes in one async test corrupt the state seen by all concurrent tests. |
 | `ETC-ISO-005` | [on_exit runs in a separate process](../rules/isolation/on-exit-process-boundary/RULE.md) | warning | Callbacks registered with `on_exit/1` run in a new process that is not the test process. They cannot access test process state, Mox allowances, or Ecto sandbox connections set up for the test. Structure cleanup to work within this constraint. |
 | `ETC-ISO-004` | [Choose sandbox mode and ownership based on process needs](../rules/isolation/sandbox-ownership-strategy/RULE.md) | warning | Select the Ecto SQL Sandbox mode — automatic, manual, or shared — based on whether your test spawns processes that need database access. Use `Sandbox.start_owner!/2` for manual mode and `Sandbox.allow/3` to grant access to spawned processes. |
+| `ETC-ISO-006` | [Stop processes the code under test starts under app supervisors](../rules/isolation/stop-indirectly-started-processes/RULE.md) | critical | When the code under test starts a child under an application-level supervisor (a DynamicSupervisor, Horde, a Task.Supervisor), `start_supervised` never sees it and it outlives the test. Stop those children from the case template, in sync tests, before the sandbox owner stops. |
 | `ETC-ISO-002` | [Generate unique values for constrained fields](../rules/isolation/unique-test-data/RULE.md) | critical | Use unique values for fields with uniqueness constraints (emails, usernames, slugs, external IDs) in each test. Hardcoded values shared across tests cause constraint violation errors when tests run concurrently or when the database is not fully reset between tests. |
 
 
@@ -145,6 +151,7 @@ Rules for using Mox, Bypass, Req.Test, and dependency injection correctly.
 | `ETC-MOCK-003` | [Use expect when verifying calls, stub for setup](../rules/mocking/expect-vs-stub/RULE.md) | recommendation | Use Mox.expect/4 when you want to assert that a function is called a specific number of times. Use Mox.stub/3 when you need a mock to return a value for setup purposes without caring how many times it is called. |
 | `ETC-MOCK-008` | [Write at least one integration test per mocked boundary](../rules/mocking/integration-test-per-mock/RULE.md) | warning | For every external boundary you mock, write at least one integration test that exercises the real implementation. Mocks prove your code handles the contract correctly; integration tests prove the real implementation works. |
 | `ETC-MOCK-002` | [Only mock at system boundaries](../rules/mocking/mock-at-boundary-only/RULE.md) | warning | Mocks should only replace modules at the edges of your system — HTTP clients, email services, payment processors, external APIs. Mocking internal modules creates brittle tests that break on every refactoring. |
+| `ETC-MOCK-010` | [Make global-mode stubs report an id the test owns](../rules/mocking/pin-global-stub-reports/RULE.md) | warning | In global mode (`set_mimic_global`, `Mox.set_mox_global`) any process can reach the test's stubs, including one leaked from an earlier test. A stub that sends the test a message should include an id the test created, and the assertion should pin it. |
 | `ETC-MOCK-007` | [Prefer dependency injection over application config](../rules/mocking/prefer-dependency-injection/RULE.md) | recommendation | Pass dependencies as function arguments or module attributes rather than reading them from Application.get_env at call time. Dependency injection makes the contract explicit, enables async tests, and avoids global state mutation in test setup. |
 | `ETC-MOCK-006` | [Use Req.Test for business logic over HTTP](../rules/mocking/req-test-for-business-logic/RULE.md) | recommendation | When using the Req HTTP library, use Req.Test to stub responses for business logic tests. Req.Test plugs a stub adapter into the Req stack without starting a real HTTP server, keeping tests fast while still exercising your response parsing logic. |
 | `ETC-MOCK-004` | [Always verify mock expectations](../rules/mocking/verify-on-exit/RULE.md) | critical | Call Mox.verify_on_exit! in every test that uses Mox.expect. Without it, unmet expectations are silently ignored and tests can pass even when the expected call was never made. |
@@ -249,6 +256,7 @@ Rules in this category cover how to write correct and reliable tests for code th
 |----|------|----------|---------|
 | `ETC-TELE-002` | [Use assert_received for synchronous telemetry events](../rules/telemetry/assert-received-for-sync/RULE.md) | warning | :telemetry.execute/3 is synchronous — the handler runs inline before execute returns. Use assert_received (no timeout) instead of assert_receive with a timeout. The timeout variant wastes time waiting for something that has already arrived. |
 | `ETC-TELE-003` | [Always detach telemetry handlers after tests](../rules/telemetry/detach-handlers/RULE.md) | warning | Telemetry handlers are global and persist for the lifetime of the VM. Failing to detach a handler after a test leaks it into subsequent tests, causing mysterious duplicate event handling, unexpected messages in other tests' mailboxes, and hard-to-reproduce failures. |
+| `ETC-TELE-005` | [Filter telemetry events by origin in async tests](../rules/telemetry/filter-events-by-origin/RULE.md) | warning | Telemetry handlers are global, so in an async test a handler also receives the events that concurrent tests emit. Forward an event only when the emitting process is the test or carries it in `$callers`, or a `refute_received` and a loose `assert_received` will fail at random. |
 | `ETC-TELE-004` | [Assert event shape, not exact measurement values](../rules/telemetry/test-shape-not-values/RULE.md) | warning | Telemetry measurement values such as durations and timestamps vary between runs. Assert that measurements have the correct keys and that values satisfy structural constraints (positive integer, map with required keys) rather than asserting exact magnitudes, which produces brittle, environment-dependent tests. |
 | `ETC-TELE-001` | [Use :telemetry_test.attach_event_handlers/2](../rules/telemetry/use-telemetry-test/RULE.md) | recommendation | Use the official :telemetry_test.attach_event_handlers/2 helper to capture telemetry events in tests. It ships with the :telemetry package, returns a reference for message matching, and formats messages consistently as {event, ref, measurements, metadata}. |
 
@@ -269,3 +277,5 @@ Rules in this category cover how to write correct and reliable tests for code th
 **Testing an Oban worker?** Start with: oban/perform-job-for-unit, oban/assert-enqueued-for-integration
 
 **Writing property tests?** Start with: property/when-to-use-properties, property/roundtrip-properties
+
+**Chasing a flaky test?** Start with: isolation/stop-indirectly-started-processes, mocking/pin-global-stub-reports, telemetry/filter-events-by-origin, core/deadline-excludes-setup, core/assert-receive-vs-received

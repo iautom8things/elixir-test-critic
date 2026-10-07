@@ -4,7 +4,7 @@
 
 Elixir testing rules that actually run.
 
-81 rules across 14 categories, each paired with a runnable `good_test.exs`
+85 rules across 14 categories, each paired with a runnable `good_test.exs`
 and `bad_test.exs` and traced to one of ten foundational principles. CI
 re-executes every example on every push across Elixir 1.17–1.19 and OTP
 27–28.

@@ -17,7 +17,10 @@ be written:
 
 2. **Handlers are global.** The handler registry is a VM-wide ETS table.
    Handlers persist until explicitly removed. Leaked handlers affect subsequent
-   tests and can cause mysterious duplicate-dispatch failures.
+   tests and can cause mysterious duplicate-dispatch failures. Even a handler
+   detached on time sees every emission of its event name, including those of
+   concurrent async tests, so async tests filter by the emitting process
+   (ETC-TELE-005).
 
 Telemetry rules address: using the official test helper, choosing the right
 assertion macro, cleaning up after handlers, and writing assertions that remain
@@ -31,3 +34,4 @@ valid across environments.
 | ETC-TELE-002 | assert-received-for-sync | Use assert_received for synchronous telemetry events | warning |
 | ETC-TELE-003 | detach-handlers | Always detach telemetry handlers after tests | warning |
 | ETC-TELE-004 | test-shape-not-values | Assert event shape, not exact measurement values | warning |
+| ETC-TELE-005 | filter-events-by-origin | Filter telemetry events by origin in async tests | warning |
