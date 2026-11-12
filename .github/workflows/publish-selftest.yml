@@ -1,0 +1,25 @@
+name: Publish self-test
+
+# Runs the pull request review action against this repo with a saved model
+# reply, to prove the check run, annotations and comment still publish. Add
+# the `publish-selftest` label to a pull request to run it.
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  publish:
+    if: contains(github.event.pull_request.labels.*.name, 'publish-selftest')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./
+        with:
+          review-file: test/fixtures/selftest_review.json

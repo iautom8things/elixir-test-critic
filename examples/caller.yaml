@@ -1,0 +1,35 @@
+# Copy to .github/workflows/elixir_test_critic.yaml in a repo that should get
+# reviews. Remove the `pull_request` trigger to make the critic answer only
+# when someone comments `@test-critic` on a pull request.
+name: Elixir Test Critic
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: elixir-test-critic-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Review changed tests
+    if: >-
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@test-critic'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    steps:
+      # Pin to a commit SHA. The rules ship with the action, so the pin also
+      # fixes which rules run.
+      - uses: iautom8things/elixir-test-critic@main
+        with:
+          token: ${{ secrets.TEST_CRITIC_COPILOT_TOKEN }}
+          requested: ${{ github.event_name == 'issue_comment' }}

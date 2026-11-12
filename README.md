@@ -77,6 +77,23 @@ it races under CI load, too long and it pads every run for no reason. Wait
 on the signal instead (principle: assert-don't-sleep).
 ```
 
+## Reviewing pull requests in CI
+
+The repo is also a GitHub Action. On a pull request it reviews only the test
+lines the change adds, then posts a score from 1 to 5, one short comment for
+critical and warning findings, and a full report on the check run. It is
+advisory and never fails the check. Comment `@test-critic` on a pull request
+to run it on demand.
+
+```yaml
+- uses: iautom8things/elixir-test-critic@<commit-sha>
+  with:
+    token: ${{ secrets.TEST_CRITIC_COPILOT_TOKEN }}
+```
+
+[docs/PR_REVIEW.md](docs/PR_REVIEW.md) has the workflow, the scoring and the
+measured cost.
+
 ## What's inside
 
 ```

@@ -1,0 +1,138 @@
+name: Elixir Test Critic
+description: >
+  Reviews the ExUnit test lines a pull request changes against the Elixir Test
+  Critic rules. Posts a score, a short comment and a full report. Advisory:
+  the check never fails.
+
+inputs:
+  engine:
+    description: Model CLI that runs the review, `copilot` or `claude`.
+    default: copilot
+  model:
+    description: Model name passed to the engine.
+    default: claude-sonnet-5
+  token:
+    description: >
+      Credential for the engine. For `copilot`, a token of a user with a
+      Copilot license. For `claude`, an Anthropic API key.
+    default: ""
+  github-token:
+    description: Token that reads the pull request and writes the check and comment.
+    default: ${{ github.token }}
+  pr-number:
+    description: Pull request to review. Defaults to the event's pull request.
+    default: ${{ github.event.pull_request.number || github.event.issue.number }}
+  review-file:
+    description: >
+      Path to a saved model reply. Skips the engine, so the publish path can
+      be tested without a model credential.
+    default: ""
+  requested:
+    description: >
+      `true` when a person asked for this run. Skips the cache and always
+      answers with a comment, even on a clean review.
+    default: "false"
+
+outputs:
+  score:
+    description: 1 to 5, or empty when no test file changed or the review failed.
+    value: ${{ steps.render.outputs.score }}
+
+runs:
+  using: composite
+  steps:
+    - name: Acknowledge the request
+      if: inputs.requested == 'true' && github.event.comment.id
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        gh api "repos/$GITHUB_REPOSITORY/issues/comments/${{ github.event.comment.id }}/reactions" \
+          -f content=eyes --silent || true
+
+    - name: Collect the changed tests
+      id: collect
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR: ${{ inputs.pr-number }}
+        REVIEW_FILE: ${{ inputs.review-file }}
+      run: |
+        work="$RUNNER_TEMP/elixir-test-critic"
+        rm -rf "$work" && mkdir -p "$work"
+        echo "work=$work" >> "$GITHUB_OUTPUT"
+        "$GITHUB_ACTION_PATH/ci/collect.sh" "$GITHUB_REPOSITORY" "$PR" "$work/pr" | tee -a "$GITHUB_OUTPUT"
+        if [ -n "$REVIEW_FILE" ]; then cp "$REVIEW_FILE" "$work/pr/review.txt"; fi
+
+    # A push that leaves the test diff unchanged reuses the last review.
+    - name: Reuse the review of an identical test diff
+      id: cache
+      if: steps.collect.outputs.files != '0' && inputs.requested != 'true' && inputs.review-file == ''
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.collect.outputs.work }}/pr/review.txt
+        key: elixir-test-critic-${{ inputs.engine }}-${{ inputs.model }}-${{ github.action_ref }}-${{ steps.collect.outputs.hash }}
+
+    - name: Review
+      if: steps.collect.outputs.files != '0' && steps.cache.outputs.cache-hit != 'true' && inputs.review-file == ''
+      shell: bash
+      env:
+        COPILOT_GITHUB_TOKEN: ${{ inputs.engine == 'copilot' && inputs.token || '' }}
+        ANTHROPIC_API_KEY: ${{ inputs.engine == 'claude' && inputs.token || '' }}
+        ENGINE: ${{ inputs.engine }}
+        MODEL: ${{ inputs.model }}
+      run: |
+        case "$ENGINE" in
+          copilot) npm install --global --silent @github/copilot ;;
+          claude) npm install --global --silent @anthropic-ai/claude-code ;;
+        esac
+        "$GITHUB_ACTION_PATH/ci/review.sh" "$ENGINE" "$MODEL" "${{ steps.collect.outputs.work }}" \
+          || echo "::warning title=Elixir Test Critic::The review did not complete."
+
+    - name: Set up Elixir
+      if: steps.collect.outputs.files != '0'
+      uses: erlef/setup-beam@v1
+      with:
+        elixir-version: "1.19"
+        otp-version: "28"
+
+    - name: Render
+      id: render
+      if: steps.collect.outputs.files != '0'
+      shell: bash
+      env:
+        REPO: ${{ github.repository }}
+        SHA: ${{ steps.collect.outputs.sha }}
+        CRITIC_REF: ${{ github.action_ref || 'main' }}
+      run: |
+        pr="${{ steps.collect.outputs.work }}/pr"
+        elixir -r "$GITHUB_ACTION_PATH/lib/test_critic/pr_report.ex" "$GITHUB_ACTION_PATH/ci/render.exs" "$pr"
+        echo "score=$(jq -r '.score // empty' "$pr/result.json")" >> "$GITHUB_OUTPUT"
+        cat "$pr/report.md" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Publish
+      if: steps.collect.outputs.files != '0'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR: ${{ inputs.pr-number }}
+        REQUESTED: ${{ inputs.requested }}
+      run: |
+        "$GITHUB_ACTION_PATH/ci/post.sh" "$GITHUB_REPOSITORY" "$PR" "${{ steps.collect.outputs.work }}/pr" "$REQUESTED"
+
+    - name: Keep the findings as JSON
+      if: steps.collect.outputs.files != '0'
+      uses: actions/upload-artifact@v4
+      with:
+        name: elixir-test-critic
+        path: ${{ steps.collect.outputs.work }}/pr/result.json
+
+    - name: Say when there was nothing to review
+      if: steps.collect.outputs.files == '0' && inputs.requested == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR: ${{ inputs.pr-number }}
+      run: |
+        gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" \
+          --body "**Elixir Test Critic:** this pull request changes no test files, so there is nothing to review."
