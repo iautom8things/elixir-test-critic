@@ -64,7 +64,7 @@ Inputs:
 | --- | --- | --- |
 | `engine` | `copilot` | `copilot` (GitHub Copilot CLI) or `claude` (Claude Code) |
 | `model` | `claude-sonnet-5` | Passed to the engine |
-| `token` | | Copilot: a token of a user with a Copilot license. Claude: an Anthropic API key |
+| `token` | | Claude: an Anthropic API key. Copilot: a licensed user's token, or empty in an organization repo to bill the organization through the job token (`copilot-requests: write`) |
 | `requested` | `false` | `true` when a person asked: skips the cache and always answers |
 
 The workflow runs when a pull request opens, leaves draft, or gets a push. A

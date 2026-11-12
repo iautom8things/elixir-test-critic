@@ -87,8 +87,6 @@ to run it on demand.
 
 ```yaml
 - uses: iautom8things/elixir-test-critic@<commit-sha>
-  with:
-    token: ${{ secrets.TEST_CRITIC_COPILOT_TOKEN }}
 ```
 
 [docs/PR_REVIEW.md](docs/PR_REVIEW.md) has the workflow, the scoring and the

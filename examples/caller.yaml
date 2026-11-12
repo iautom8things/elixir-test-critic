@@ -26,10 +26,11 @@ jobs:
       contents: read
       pull-requests: write
       checks: write
+      # Lets the Copilot CLI run on the job token, billed to the organization.
+      copilot-requests: write
     steps:
       # Pin to a commit SHA. The rules ship with the action, so the pin also
       # fixes which rules run.
       - uses: iautom8things/elixir-test-critic@main
         with:
-          token: ${{ secrets.TEST_CRITIC_COPILOT_TOKEN }}
           requested: ${{ github.event_name == 'issue_comment' }}

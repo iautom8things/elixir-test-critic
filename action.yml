@@ -13,8 +13,10 @@ inputs:
     default: claude-sonnet-5
   token:
     description: >
-      Credential for the engine. For `copilot`, a token of a user with a
-      Copilot license. For `claude`, an Anthropic API key.
+      Credential for the engine. For `claude`, an Anthropic API key. For
+      `copilot`, a token of a user with a Copilot license, or leave it empty
+      in an organization repo to run on the job token, billed to the
+      organization. That needs the `copilot-requests: write` permission.
     default: ""
   github-token:
     description: Token that reads the pull request and writes the check and comment.
@@ -77,14 +79,22 @@ runs:
       if: steps.collect.outputs.files != '0' && steps.cache.outputs.cache-hit != 'true' && inputs.review-file == ''
       shell: bash
       env:
-        COPILOT_GITHUB_TOKEN: ${{ inputs.engine == 'copilot' && inputs.token || '' }}
-        ANTHROPIC_API_KEY: ${{ inputs.engine == 'claude' && inputs.token || '' }}
+        TOKEN: ${{ inputs.token }}
+        JOB_TOKEN: ${{ inputs.github-token }}
         ENGINE: ${{ inputs.engine }}
         MODEL: ${{ inputs.model }}
       run: |
+        # With no token, the Copilot CLI runs on the job token and GitHub bills
+        # the organization that owns the repo (needs `copilot-requests: write`).
         case "$ENGINE" in
-          copilot) npm install --global --silent @github/copilot ;;
-          claude) npm install --global --silent @anthropic-ai/claude-code ;;
+          copilot)
+            npm install --global --silent @github/copilot
+            if [ -n "$TOKEN" ]; then export COPILOT_GITHUB_TOKEN="$TOKEN"; else export GITHUB_TOKEN="$JOB_TOKEN"; fi
+            ;;
+          claude)
+            npm install --global --silent @anthropic-ai/claude-code
+            export ANTHROPIC_API_KEY="$TOKEN"
+            ;;
         esac
         "$GITHUB_ACTION_PATH/ci/review.sh" "$ENGINE" "$MODEL" "${{ steps.collect.outputs.work }}" \
           || echo "::warning title=Elixir Test Critic::The review did not complete."
