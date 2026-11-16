@@ -5,8 +5,9 @@ category: core
 severity: recommendation
 summary: >
   Write doctests only for pure, deterministic functions. Doctests for functions
-  with side effects (database writes, HTTP calls, process interactions) are fragile,
-  hard to maintain, and run without ExUnit's isolation infrastructure.
+  with side effects (database writes, HTTP calls, process interactions) are fragile
+  and hard to maintain: the example cannot show the setup it depends on, and its
+  printed result drifts with the state it reads.
 principles:
   - purity-separation
   - public-interface
@@ -24,18 +25,21 @@ functions with side effects.
 
 ## Problem
 
-Doctests run in a minimal environment — they don't have access to Ecto sandboxes,
-Mox allowances, or test-specific configuration. When a doctest calls a function
-that writes to a database or spawns a process, it either:
+A doctest is an ordinary test of the module that calls `doctest`. It runs with
+that module's `setup` and case template. So a doctest can get an Ecto sandbox or
+Mox setup, but only from the test module, never from the docstring. When a
+doctest calls a function that writes to a database or spawns a process, one of
+these follows:
 
-1. **Fails in test environment** because the required infrastructure (database
-   connection, running service) isn't set up for doctests
-2. **Passes in isolation but corrupts the database** because it runs outside the
-   Ecto sandbox, leaving data that affects other tests
-3. **Requires complex setup** (starting applications, seeding data) that pollutes
-   the docstring with infrastructure concerns
+1. **It fails**, because the test module that calls `doctest` is a plain
+   `ExUnit.Case` with no sandbox checkout or running service
+2. **It passes and leaves data behind**, because nothing wraps the write in a
+   sandbox transaction
+3. **It passes only through hidden setup**: the test module seeds data or checks
+   out a sandbox that the reader of the documentation never sees, so the example
+   does not work when pasted into `iex`
 
-Beyond isolation, doctests that show side-effectful behavior are misleading —
+Doctests that show side-effectful behavior are also misleading:
 the example output may depend on existing database state, server responses, or
 environment variables, making the documentation inaccurate.
 

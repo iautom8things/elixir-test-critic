@@ -28,9 +28,9 @@ related_rules:
 
 `assert_receive/2` waits up to a configurable timeout for a message to arrive in
 the test process mailbox. `assert_received/1` checks the mailbox immediately with
-no wait. Using the wrong one causes intermittent failures: `assert_received` fails
-on slow machines when the message hasn't arrived yet, and `assert_receive` with an
-unnecessary timeout slows fast tests.
+no wait. Only one direction of the mix-up is a defect: `assert_received` on a
+message that may not have arrived yet fails intermittently. `assert_receive` on a
+message that is already there returns at once and costs nothing.
 
 ## Problem
 
@@ -41,8 +41,10 @@ after system slow-down. These are the worst kind of failures — infrequent and
 non-reproducible.
 
 **Using `assert_receive` when sync is sufficient:**
-Less harmful but misleading. It suggests the message arrival is uncertain when it
-is actually guaranteed, and it adds an unnecessary timeout to each test run.
+Not a bug, and not slower. `assert_receive` returns as soon as a matching message
+is in the mailbox, so a passing test never waits out the timeout. The only costs
+are that a failing test waits for the timeout before it reports, and that the
+reader cannot tell the delivery was guaranteed. Do not report this as a defect.
 
 The correct pattern when you need sync-then-assert is to force synchronisation
 through the process's own API (e.g., a `GenServer.call/2` to flush its mailbox)
@@ -51,14 +53,14 @@ and then use `assert_received`.
 ## Detection
 
 - `assert_received` immediately after `spawn`, `Task.async`, `send` from another process, or any `cast`
-- `assert_receive` after a `GenServer.call` that is known to trigger a synchronous send-back
 - `Process.sleep` followed by `assert_received` (replace both with `assert_receive`)
 
 ## Bad
 
 ```elixir
 test "worker sends :done after processing" do
-  pid = spawn(fn -> Process.send(self(), :done, []) end)
+  test_pid = self()
+  spawn(fn -> send(test_pid, :done) end)
   # Races with the spawned process — may fail on slow systems
   assert_received :done
 end
@@ -68,8 +70,9 @@ end
 
 ```elixir
 test "worker sends :done after processing" do
-  _pid = spawn(fn -> Process.send(self(), :done, []) end)
-  # Waits up to 500ms — deterministic regardless of scheduling
+  test_pid = self()
+  spawn(fn -> send(test_pid, :done) end)
+  # Waits up to 500ms and returns as soon as the message arrives
   assert_receive :done, 500
 end
 ```

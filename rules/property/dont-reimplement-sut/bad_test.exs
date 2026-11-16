@@ -21,7 +21,7 @@ defmodule MyApp.DontReimplementBadTest do
 
   # BAD: Reimplements the exact same formula in the assertion.
   # If the formula is 0.15 when it should be 0.20, this test passes anyway.
-  # The test provides zero confidence that the formula is correct.
+  # The test cannot tell whether the formula is correct.
   property "BAD: vip discount equals amount * 0.15" do
     check all amount <- StreamData.integer(1..10_000) do
       # The assertion IS the implementation — same bug passes the same test

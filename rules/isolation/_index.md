@@ -16,7 +16,7 @@ in projects using Ecto, where the database is the most common source of shared s
 | ID | Slug | Title | Severity |
 |----|------|-------|----------|
 | ETC-ISO-001 | no-app-put-env-async | Never use Application.put_env in async tests | critical |
-| ETC-ISO-002 | unique-test-data | Generate unique values for constrained fields | critical |
+| ETC-ISO-002 | unique-test-data | Generate unique values for constrained fields | warning |
 | ETC-ISO-003 | no-shared-ets-async | Do not share ETS/persistent_term in async tests | critical |
 | ETC-ISO-004 | sandbox-ownership-strategy | Choose sandbox mode and ownership based on process needs | warning |
 | ETC-ISO-005 | on-exit-process-boundary | on_exit runs in a separate process | warning |

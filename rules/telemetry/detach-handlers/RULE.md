@@ -32,7 +32,8 @@ A leaked handler means every subsequent telemetry event matching that event
 name will invoke your stale handler. Depending on what the handler does, this
 can:
 
-- Send unexpected messages to a dead test process (causing `send` failures).
+- Send messages to a dead test process, where they vanish, or to a live one
+  that did not expect them.
 - Accumulate in a shared process or ETS table used by later tests.
 - Cause double-counting in metrics tests, making them flaky.
 - Raise errors because the handler references a closed resource.
@@ -51,10 +52,15 @@ on_exit(fn -> :telemetry.detach(handler_id) end)
 
 ## Note on :telemetry_test.attach_event_handlers/2
 
-When you use `:telemetry_test.attach_event_handlers/2`, the helper attaches the
-handler with the test process's pid as part of the handler id and automatically
-detaches when the test process exits. You do **not** need a manual `on_exit`
-call when using this helper — another reason to prefer it over manual attachment.
+`:telemetry_test.attach_event_handlers/2` does not clean up after itself. It
+attaches a handler under a fresh reference and returns that reference. Nothing
+monitors the test process, so the handler stays attached after the test ends.
+Detach it the same way:
+
+```elixir
+ref = :telemetry_test.attach_event_handlers(self(), [event])
+on_exit(fn -> :telemetry.detach(ref) end)
+```
 
 ## Detection
 
@@ -125,7 +131,6 @@ end
 
 ## When This Does Not Apply
 
-- Tests using `:telemetry_test.attach_event_handlers/2` — cleanup is automatic.
 - Tests that verify handler behaviour via a real application started under
   supervision (the app's supervision tree manages handler lifecycle).
 

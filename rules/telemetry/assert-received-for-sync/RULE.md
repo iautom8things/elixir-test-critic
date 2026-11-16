@@ -2,12 +2,12 @@
 id: ETC-TELE-002
 title: "Use assert_received for synchronous telemetry events"
 category: telemetry
-severity: warning
+severity: recommendation
 summary: >
   :telemetry.execute/3 is synchronous — the handler runs inline before execute
-  returns. Use assert_received (no timeout) instead of assert_receive with a
-  timeout. The timeout variant wastes time waiting for something that has
-  already arrived.
+  returns. Prefer assert_received (no timeout) over assert_receive: it states
+  that delivery is synchronous and fails at once if that stops being true. A
+  passing assert_receive is not slower, so this is a clarity preference.
 principles:
   - assert-not-sleep
 applies_when:
@@ -30,9 +30,16 @@ time the next line of your test runs, the handler has already executed and any
 `send` it issued has already arrived in the mailbox.
 
 `assert_received` checks the current mailbox without waiting. `assert_receive`
-blocks for up to the given timeout (default 100 ms) before failing. When the
-message is guaranteed to be present, adding a timeout is misleading — it implies
-async delivery — and it slows down the test suite on the failure path.
+also returns at once when the message is already there, so a passing test pays
+nothing for it. The difference shows only in two places:
+
+- **What the test says.** `assert_received` tells the reader the event is emitted
+  synchronously. `assert_receive` suggests it might arrive later.
+- **What the test catches.** If someone moves the emission into a background
+  process, `assert_received` fails at once. `assert_receive` keeps passing and
+  hides the change. On failure it also waits out the timeout before reporting.
+
+Neither is a bug. Treat this as a readability preference, not a defect.
 
 ## Detection
 
@@ -51,9 +58,9 @@ defmodule MyApp.MetricsTest do
 
     MyApp.Repo.query!("SELECT 1")
 
-    # BAD: assert_receive with a timeout. The event is already in the mailbox.
-    # The 200 ms wait is wasted time and misleads readers into thinking this
-    # is an async operation.
+    # Weaker: the event is already in the mailbox, so this returns at once.
+    # But it reads as an async operation, and it would keep passing if the
+    # emission later moved to a background process.
     assert_receive {[:my_app, :repo, :query], ^ref, _measurements, _meta}, 200
   end
 end
@@ -70,7 +77,7 @@ defmodule MyApp.MetricsTest do
 
     MyApp.Repo.query!("SELECT 1")
 
-    # GOOD: assert_received — no wait needed, message is already here.
+    # Better: states that the event is emitted before query!/1 returns.
     assert_received {[:my_app, :repo, :query], ^ref, _measurements, _meta}
   end
 end

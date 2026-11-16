@@ -16,7 +16,7 @@ These rules draw on the principles of purity separation, boundary testing, and h
 | ETC-ECTO-002 | constraint-needs-db | Test constraint violations with actual DB operations | recommendation |
 | ETC-ECTO-003 | dont-test-ecto-itself | Test your changeset function, not Ecto's validations | warning |
 | ETC-ECTO-004 | use-errors-on-helper | Use errors_on/1 helper for changeset error assertions | style |
-| ETC-ECTO-005 | unique-factory-values | Use System.unique_integer for factory unique fields | critical |
+| ETC-ECTO-005 | unique-factory-values | Use System.unique_integer for factory unique fields | warning |
 | ETC-ECTO-006 | context-functions-for-test-data | Create test data through context functions | warning |
 | ETC-ECTO-007 | multi-unit-test | Unit test Ecto.Multi with to_list without DB | recommendation |
 | ETC-ECTO-009 | allow-for-spawned-processes | Use Sandbox.allow for spawned process DB access | warning |
@@ -66,9 +66,9 @@ a DB insert produces a test that can never catch violations.
 
 ### ETC-ECTO-003 — dont-test-ecto-itself
 
-Your changeset test should verify that your function calls `validate_required` on the
-correct set of fields — not that `validate_required` works correctly. Test the contract
-of your function, not the implementation of the library.
+Call your application's changeset function and assert on the specific error it
+produces. A test that builds its own changeset checks Ecto, not your code, and a test
+that only refutes `valid?` passes for any error.
 
 ### ETC-ECTO-004 — use-errors-on-helper
 
@@ -78,10 +78,10 @@ normalises errors to `%{field => [message]}`, producing readable and stable asse
 
 ### ETC-ECTO-005 — unique-factory-values
 
-Hardcoded unique field values in factories (emails, usernames, slugs) cause unique
-constraint violations when two async tests call the same factory simultaneously. Use
-`System.unique_integer([:positive])` in factory defaults. This is a `critical` rule
-because the failure mode is a flaky test suite that becomes unreliable in CI.
+A factory with a hardcoded unique value (email, username, slug) fails on its second
+call within one test. Across concurrent sandbox tests it causes lock waits and possible
+deadlocks, not constraint errors. Use `System.unique_integer([:positive])` in factory
+defaults.
 
 ### ETC-ECTO-006 — context-functions-for-test-data
 
@@ -98,14 +98,15 @@ order) without spinning up a database.
 
 ### ETC-ECTO-009 — allow-for-spawned-processes
 
-The Ecto SQL Sandbox grants database access to the test process only. Any child process
-(Task, GenServer, Agent) that makes Repo calls will raise `DBConnection.OwnershipError`
-unless you call `Ecto.Adapters.SQL.Sandbox.allow/3` to share ownership.
+The Ecto SQL Sandbox grants database access to the test process. Tasks started from
+the test reach that connection through `$callers`. Any other process (GenServer, Agent,
+plain `spawn`) that makes Repo calls raises `DBConnection.OwnershipError` unless you
+call `Ecto.Adapters.SQL.Sandbox.allow/3` for it.
 
 ### ETC-ECTO-010 — deferred-constraint-gotcha
 
 PostgreSQL `DEFERRABLE INITIALLY DEFERRED` constraints are only checked at transaction
 commit, not at INSERT time. A test that expects a constraint error mid-transaction will
 be silently wrong. Use `SET CONSTRAINTS ALL IMMEDIATE` to force immediate evaluation, or
-test at transaction commit. SQLite always checks constraints immediately; this rule is
-Postgres-specific.
+test at transaction commit. SQLite can defer only foreign keys, so for unique and
+check constraints this rule is Postgres-specific.

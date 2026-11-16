@@ -97,5 +97,4 @@ end
 ## Further Reading
 
 - [ExUnit.Assertions — assert_receive/3](https://hexdocs.pm/ex_unit/ExUnit.Assertions.html#assert_receive/3)
-- [José Valim — "No more Process.sleep in tests"](https://elixir-lang.org/blog/2019/02/25/mint-a-new-http-client-for-elixir/)
 - [Saša Jurić — "The soul of Erlang and Elixir" (synchronization patterns)](https://www.youtube.com/watch?v=JvBT4XBdoUE)

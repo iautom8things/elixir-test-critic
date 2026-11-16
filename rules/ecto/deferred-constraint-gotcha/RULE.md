@@ -8,7 +8,7 @@ summary: >
   point of the offending statement. Tests that expect a constraint error mid-transaction
   will silently pass without catching the violation. Use SET CONSTRAINTS ALL IMMEDIATE
   to force evaluation, or restructure the test to commit and observe the error.
-  Note: SQLite does not support deferred constraints; this rule is Postgres-specific.
+  Note: SQLite can defer only foreign keys, so for unique constraints this rule is Postgres-specific.
 principles:
   - boundary-testing
 applies_when:
@@ -54,9 +54,10 @@ constraint violation causes `{:error, ...}` to be returned from the transaction.
 
 ## SQLite note
 
-SQLite does not support deferred constraints. Constraint checking in SQLite always
-happens immediately. The examples in this rule use SQLite to demonstrate immediate
-constraint testing, which is analogous to how Postgres behaves after
+SQLite can defer foreign key constraints (`DEFERRABLE INITIALLY DEFERRED`), and
+only those. Unique, check and not-null constraints are always checked at the
+statement. The examples in this rule use a unique index on SQLite, so they show
+immediate constraint testing, which is analogous to how Postgres behaves after
 `SET CONSTRAINTS ALL IMMEDIATE`. For production Postgres deferred constraint testing,
 use `Repo.query!("SET CONSTRAINTS ALL IMMEDIATE")` as shown above.
 

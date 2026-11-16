@@ -105,4 +105,3 @@ end
 ## Further Reading
 
 - [ExUnit.Callbacks — setup/1](https://hexdocs.pm/ex_unit/ExUnit.Callbacks.html#setup/1)
-- [Elixir Forum — Composing ExUnit setup](https://elixirforum.com/t/composing-exunit-setup/30952)

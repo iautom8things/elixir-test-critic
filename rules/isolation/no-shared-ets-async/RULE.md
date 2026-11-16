@@ -69,8 +69,9 @@ defmodule MyApp.CacheTest do
 
   setup do
     # Per-test ETS table with a unique name — not shared across tests
+    # The test process owns it, so it is deleted when the test exits. An on_exit
+    # delete would run after that and raise on a table that no longer exists.
     table = :ets.new(:"cache_#{System.unique_integer([:positive])}", [:set, :public])
-    on_exit(fn -> :ets.delete(table) end)
     %{table: table}
   end
 
@@ -91,6 +92,10 @@ end
 - **Read-only tables in `test_helper.exs`**: if `test_helper.exs` populates an ETS table
   once (e.g., with reference data) before tests start, all tests can safely read from it
   because no test writes to it
+- **Rows keyed per test in a shared table**: a test that writes only under a key
+  it generated (`{test_id, key}`, a unique integer, its own pid) and removes
+  those rows in `on_exit` does not collide with other tests, even in a named
+  table. Report shared *keys*, not the shared table.
 - **Sequential tests with cleanup**: `async: false` tests that write to named ETS and
   clean up in `on_exit` are safe (though still a code smell if avoidable)
 
@@ -98,4 +103,3 @@ end
 
 - [Erlang :ets module docs](https://www.erlang.org/doc/man/ets.html)
 - [:persistent_term module docs](https://www.erlang.org/doc/man/persistent_term.html)
-- [Elixir forum — ETS in tests](https://elixirforum.com/t/ets-tables-in-tests/12345)

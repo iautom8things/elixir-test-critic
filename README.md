@@ -83,12 +83,12 @@ on the signal instead (principle: assert-don't-sleep).
 rules/
 ├── 00-principles.md     # the ten foundational principles
 ├── _support/            # shared infrastructure for example scripts
-├── core/          (10)  # fundamental ExUnit patterns
-├── isolation/      (5)  # test isolation
+├── core/          (11)  # fundamental ExUnit patterns
+├── isolation/      (6)  # test isolation
 ├── errors/         (3)  # error-path testing
 ├── otp/            (6)  # GenServer / supervisor testing
 ├── ecto/           (9)  # Ecto / database testing
-├── mocking/        (9)  # Mox, Bypass, Req.Test, DI
+├── mocking/       (10)  # Mox, Bypass, Req.Test, DI
 ├── phoenix/        (5)  # controllers, PubSub
 ├── liveview/       (8)  # LiveView lifecycle
 ├── oban/           (4)  # Oban workers
@@ -96,7 +96,7 @@ rules/
 ├── organization/   (5)  # test suite structure
 ├── absinthe/       (5)  # Absinthe GraphQL
 ├── broadway/       (4)  # Broadway pipelines
-└── telemetry/      (4)  # Telemetry events
+└── telemetry/      (5)  # Telemetry events
 ```
 
 Each rule is a directory with a `RULE.md` — YAML frontmatter (`id`,
@@ -106,7 +106,7 @@ from a bare Elixir install via `Mix.install/1`.
 
 ## How the corpus stays honest
 
-**Every rule is executable.** `mix check_rules` runs all 162 example scripts
+**Every rule is executable.** `mix check_rules` runs all 170 example scripts
 on every push. A regression against a new Elixir release, a dependency bump,
 or an OTP change breaks the build.
 

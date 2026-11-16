@@ -27,10 +27,11 @@ connection between each test and the function it exercises is implicit. Failure
 output says `MyModuleTest — error on line 47` without indicating which function
 broke. As the module grows, the flat list of tests becomes hard to scan.
 
-Nested `describe` blocks (grouping by scenario inside a function group) are acceptable
-but should not substitute for the function-level structure. The function-level
-`describe` is the minimum structure that every test module with multiple public
-functions should have.
+ExUnit does not allow a `describe` inside another `describe`. To group scenarios
+within one function, put the scenario in the test name or share setup with named
+setup functions (`setup :create_user`). The function-level `describe` is the
+minimum structure that every test module with multiple public functions should
+have.
 
 ## Detection
 
@@ -84,4 +85,3 @@ end
 ## Further Reading
 
 - [ExUnit.Case describe/2 docs](https://hexdocs.pm/ex_unit/ExUnit.Case.html#describe/2)
-- [Elixir Testing with ExUnit — Álvaro Paço](https://dashbit.co/blog/a-tour-of-meilisearch-in-elixir)

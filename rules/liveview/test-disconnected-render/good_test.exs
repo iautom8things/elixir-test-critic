@@ -17,9 +17,9 @@ Mix.install([])
 #     assert render(view) =~ "Hello"
 #   end
 #
-# The disconnected phase catches:
-#   - mount/3 crashes that only happen on HTTP (before socket is connected)
-#   - missing assigns in the connected?/1 == false branch
+# live/2 already runs the disconnected mount, so a crash there fails either way.
+# Asserting on the static HTML adds:
+#   - what the connected?/1 == false branch actually renders
 #   - SEO/crawler-visible content
 #
 # The connected phase catches:

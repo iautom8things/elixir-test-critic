@@ -61,7 +61,7 @@ functionality that genuinely requires JavaScript execution.
 
 | ID | Rule | Severity |
 |----|------|----------|
-| ETC-LV-001 | [Test both disconnected and connected renders](test-disconnected-render/) | warning |
+| ETC-LV-001 | [Test both disconnected and connected renders](test-disconnected-render/) | recommendation |
 | ETC-LV-002 | [Use element-scoped events, not direct events](element-scoped-events/) | warning |
 | ETC-LV-003 | [Pass form values to form/3, not render_submit](form-values-in-form-helper/) | critical |
 | ETC-LV-004 | [Always call render_async for async assigns](render-async-required/) | critical |

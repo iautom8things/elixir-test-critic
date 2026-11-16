@@ -22,7 +22,11 @@ defmodule TestCritic.TocGenerator do
 
   @category_order ~w(core isolation errors otp ecto mocking phoenix liveview oban property organization absinthe broadway telemetry)
 
-  def generate(rules_dir \\ "rules", template_path \\ "templates/toc_template.md.eex", output_path \\ "toc/RULES_REFERENCE.md") do
+  def generate(
+        rules_dir \\ "rules",
+        template_path \\ "templates/toc_template.md.eex",
+        output_path \\ "toc/RULES_REFERENCE.md"
+      ) do
     rules = RuleParser.discover_rules(rules_dir)
 
     categories =
@@ -84,6 +88,7 @@ defmodule TestCritic.TocGenerator do
 
   defp extract_description(content) do
     content
+    |> drop_front_matter()
     |> String.split("\n")
     |> Enum.drop_while(&(String.trim(&1) == "" or String.starts_with?(String.trim(&1), "#")))
     |> Enum.take_while(&(String.trim(&1) != ""))
@@ -94,4 +99,14 @@ defmodule TestCritic.TocGenerator do
       desc -> desc
     end
   end
+
+  # Some category indexes open with a YAML front matter block.
+  defp drop_front_matter("---\n" <> rest) do
+    case String.split(rest, ~r/^---\s*$/m, parts: 2) do
+      [_front_matter, body] -> body
+      _ -> rest
+    end
+  end
+
+  defp drop_front_matter(content), do: content
 end

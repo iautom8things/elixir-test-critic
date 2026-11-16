@@ -2,11 +2,12 @@
 id: ETC-ECTO-005
 title: "Use System.unique_integer for factory unique fields"
 category: ecto
-severity: critical
+severity: warning
 summary: >
-  Hardcoded unique values in test factories (e.g. email: "user@test.com") cause unique
-  constraint violations when tests run concurrently. Use System.unique_integer([:positive])
-  to generate unique values per test invocation.
+  A factory with a hardcoded unique value (e.g. email: "user@test.com") fails with a
+  unique constraint error the second time one test calls it. Across concurrent sandbox
+  tests it makes them wait on each other's locks and can deadlock. Use
+  System.unique_integer([:positive]) to generate a unique value per call.
 principles:
   - async-default
   - honest-data
@@ -15,18 +16,25 @@ applies_when:
   - "Any helper that builds a User, Account, or other schema with a unique index"
   - "Test setup blocks that create database records used across multiple tests"
 does_not_apply_when:
-  - "Tests run with async: false and uniqueness is guaranteed by other means"
+  - "The field has no unique index"
 ---
 
 # Use System.unique_integer for factory unique fields
 
-When tests run concurrently (`async: true` with Ecto SQL Sandbox), multiple tests execute
-at the same time. If every test's factory function inserts a row with the same hardcoded
-email address, the second test to run will hit a unique constraint violation on the email
-column — not because the test logic is wrong, but because the test data is shared.
+A factory that inserts the same hardcoded email every time breaks in two ways.
 
-`System.unique_integer([:positive])` returns a monotonically increasing integer that is
-unique per BEAM node invocation, making it safe for async test data generation.
+**Within one test.** A test that needs two users calls the factory twice. The
+second insert hits the unique index and fails, every time. Callers work around it
+by overriding the field, and the factory's default becomes a trap.
+
+**Across concurrent tests.** With `async: true` and the SQL sandbox, each test
+runs in its own transaction, so the second test does not get a constraint error.
+It waits for the first test's transaction to end. Tests that share the value run
+one at a time on that row, and two shared values taken in opposite orders can
+deadlock (see ETC-ISO-002).
+
+`System.unique_integer([:positive])` returns an integer that is unique within the
+running VM, so every factory call gets its own value.
 
 ## Problem
 
@@ -34,15 +42,16 @@ unique per BEAM node invocation, making it safe for async test data generation.
 # DANGER: all async tests that call user_fixture() share "user@test.com"
 def user_fixture(attrs \\ %{}) do
   {:ok, user} = Accounts.create_user(Map.merge(%{
-    email: "user@test.com",  # ← hardcoded, will collide in async tests
+    email: "user@test.com",  # ← hardcoded: a second call in one test fails
     password: "password123"
   }, attrs))
   user
 end
 ```
 
-When two async tests call `user_fixture()` simultaneously, the second `create_user` call
-fails with a unique constraint violation on the `email` column.
+A test that calls `user_fixture()` twice fails on the second call with a unique
+constraint error on `email`. Two async tests that each call it once do not fail,
+but one waits for the other.
 
 ## Detection
 
@@ -78,8 +87,9 @@ end
 
 ## When This Does Not Apply
 
-- Tests run with `async: false` and uniqueness is guaranteed by other means
-  (e.g., full database rollback between tests, no parallel execution)
+- Fields with no unique index
+- A factory that takes the unique value as a required argument, so every caller
+  supplies its own
 
 ## Further Reading
 

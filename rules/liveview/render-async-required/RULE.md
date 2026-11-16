@@ -20,14 +20,16 @@ applies_when:
 # Always call render_async for async assigns
 
 Phoenix LiveView 0.19+ provides `assign_async/3` and `start_async/3` for
-non-blocking data loading. The rendered HTML goes through three states:
+non-blocking data loading. The rendered HTML goes through two states:
 
 1. **Loading**: the async task is running; the LiveView renders a loading indicator
 2. **Result** (or **Error**): the task completed; the LiveView renders the data
 
-In LiveViewTest, after mounting the view, async tasks are suspended. You must
-call `render_async(view)` to allow the tasks to run and the view to re-render
-with the result. Without this call, all assertions see only the loading state.
+In LiveViewTest the async tasks are real. Each one starts running in its own
+process as soon as the view starts it. `render_async(view)` waits for the view's
+async tasks to finish and returns the HTML rendered with their results. Without
+it, an assertion races the task: it usually sees the loading state, and
+sometimes the result.
 
 ## Problem
 
@@ -36,8 +38,8 @@ The most common mistake is asserting on the final content immediately after
 not found), the developer adds `Process.sleep(50)`, and now the test is both
 slow and potentially flaky.
 
-The correct fix is `render_async(view)`, which drives the async task to
-completion synchronously within the test process.
+The correct fix is `render_async(view)`, which blocks the test until the
+tasks have finished, up to a timeout, with no guessed delay.
 
 ## Detection
 

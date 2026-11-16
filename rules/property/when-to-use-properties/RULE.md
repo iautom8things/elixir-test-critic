@@ -88,5 +88,4 @@ end
 ## Further Reading
 
 - [StreamData documentation](https://hexdocs.pm/stream_data/StreamData.html)
-- [José Valim — "Property-based testing is a mindset"](https://dashbit.co/blog/property-based-testing-is-a-mindset)
 - [Fred Hebert — "Property-Based Testing with PropEr, Erlang, and Elixir"](https://pragprog.com/titles/fhproper/property-based-testing-with-proper-erlang-and-elixir/)
