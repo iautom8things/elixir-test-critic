@@ -39,6 +39,9 @@ The rules are consumed in two ways:
 │   └── RULES_REFERENCE.md     # Auto-generated condensed catalog
 ├── templates/
 │   └── toc_template.md.eex    # EEx template for RULES_REFERENCE.md
+├── action.yml                 # GitHub Action: pull request review (docs/PR_REVIEW.md)
+├── ci/                        # The action's prompt and collect/review/render/post steps
+├── lib/test_critic/pr_report.ex  # Vets the model's findings, scores, renders
 ├── lib/mix/tasks/             # validate_rules, check_rules, generate_toc
 └── test/                      # Tests for the mix tasks and support modules
 ```

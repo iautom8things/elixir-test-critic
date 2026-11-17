@@ -1,0 +1,40 @@
+{
+  "files_reviewed": 1,
+  "categories": ["core", "errors", "organization"],
+  "findings": [
+    {
+      "rule_id": "ETC-CORE-005",
+      "file": "test/pr_report_test.exs",
+      "line": 12,
+      "title": "Self-test: a sleep inside a diff fixture, not a real problem",
+      "why": "This finding comes from test/fixtures/selftest_review.json. It exists to show how a critical finding is published.",
+      "fix": "assert_receive {:done, _}, 500"
+    },
+    {
+      "rule_id": "ETC-ERR-001",
+      "file": "test/pr_report_test.exs",
+      "line": 14,
+      "occurrences": 2,
+      "title": "Self-test: assert_raise without a message, not a real problem",
+      "why": "This finding comes from the self-test fixture. It shows a warning.",
+      "fix": "assert_raise RuntimeError, ~r/boom/, fn -> boom() end"
+    },
+    {
+      "rule_id": "ETC-CORE-002",
+      "file": "test/pr_report_test.exs",
+      "line": 70,
+      "title": "Self-test: a low-severity note that stays out of the comment",
+      "why": "Recommendations and style notes appear only in the full report and as annotations.",
+      "fix": "Nothing to change."
+    },
+    {
+      "rule_id": "ETC-NOPE-999",
+      "file": "test/pr_report_test.exs",
+      "line": 12,
+      "title": "Self-test: a rule that does not exist is not reported",
+      "why": "The renderer drops it.",
+      "fix": ""
+    }
+  ],
+  "strengths": ["The fixture exercises every severity path the renderer has."]
+}
