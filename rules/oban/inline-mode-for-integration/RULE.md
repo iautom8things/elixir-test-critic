@@ -118,4 +118,4 @@ end
 ## Further Reading
 
 - [Oban.Testing — testing modes](https://hexdocs.pm/oban/Oban.Testing.html)
-- [Oban configuration guide](https://hexdocs.pm/oban/configuration.html)
+- [Oban testing guide](https://hexdocs.pm/oban/testing.html)

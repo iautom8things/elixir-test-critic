@@ -108,4 +108,4 @@ end
 
 - [Testing Elixir (Pragmatic) — Integration tests](https://pragprog.com/titles/lmelixir/testing-elixir/)
 - [ExUnit — tags](https://hexdocs.pm/ex_unit/ExUnit.Case.html#module-tags)
-- [Mox rationale — testing pyramid](https://hexdocs.pm/mox/readme.html)
+- [Mox documentation](https://hexdocs.pm/mox/Mox.html)

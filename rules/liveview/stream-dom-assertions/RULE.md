@@ -100,4 +100,4 @@ end
 
 - [Phoenix.LiveView stream/4 docs](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html#stream/4)
 - [Phoenix.LiveViewTest has_element?/2](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveViewTest.html#has_element?/2)
-- [Streams overview — Phoenix LiveView guides](https://hexdocs.pm/phoenix_live_view/streams.html)
+- [Phoenix.LiveView.stream/4](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html#stream/4)

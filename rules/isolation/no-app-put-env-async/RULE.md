@@ -108,4 +108,3 @@ end
 ## Further Reading
 
 - [Application module docs](https://hexdocs.pm/elixir/Application.html)
-- [Saša Jurić — "Testing GenServers with global state"](https://medium.com/very-big-things/towards-maintainable-elixir-testing-part-1-of-4-4e0571440bf0)

@@ -105,6 +105,5 @@ end
 
 ## Further Reading
 
-- [Saša Jurić — "Supervise Me" (ElixirConf EU 2019)](https://www.youtube.com/watch?v=fTTyQNd_loA)
 - [José Valim — "Elixir in Production" talks on thin processes]
 - [Elixir docs — GenServer](https://hexdocs.pm/elixir/GenServer.html)

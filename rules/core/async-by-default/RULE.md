@@ -81,4 +81,3 @@ end
 
 - [ExUnit.Case docs — async option](https://hexdocs.pm/ex_unit/ExUnit.Case.html)
 - [José Valim — "Mocks and explicit contracts"](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/)
-- [Saša Jurić — "Testing Elixir" (ElixirConf)](https://www.youtube.com/watch?v=LjTpNVqPL-Y)

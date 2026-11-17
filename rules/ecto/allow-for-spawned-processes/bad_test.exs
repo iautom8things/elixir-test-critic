@@ -1,12 +1,9 @@
 # EXPECTED: passes
-# BAD PRACTICE: Demonstrates a Task accessing the DB without Sandbox.allow.
-# In a real Ecto.Adapters.SQL.Sandbox :manual setup, this would raise:
-#   ** (DBConnection.OwnershipError) cannot find ownership process for #PID<...>
-#
-# This script uses {:shared, self()} sandbox mode so the Task can query without
-# Sandbox.allow — the point is to show the structural problem. In a real test suite
-# with :manual mode (the correct default), the Task would crash without Sandbox.allow.
-Mix.install([{:ecto_sql, "~> 3.0"}, {:ecto_sqlite3, ">= 0.0.0"}])
+# BAD PRACTICE: a worker the test did not start as a Task touches the database
+# with no Sandbox.allow/3. It cannot find the test's connection and raises
+# DBConnection.OwnershipError. The script passes because the test asserts on
+# that error, to show the failure a real suite would hit.
+Mix.install([:ecto_sql, :ecto_sqlite3])
 Code.require_file("../../_support/db.exs", __DIR__)
 
 :ok = Ecto.Adapters.SQL.Sandbox.checkout(TestCritic.Repo)
@@ -26,51 +23,40 @@ ExUnit.start(autorun: false)
 
 defmodule SandboxAllowBad.Item do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "bad_allow_items" do
     field :label, :string
     timestamps()
-  end
-
-  def changeset(item, attrs) do
-    item |> cast(attrs, [:label]) |> validate_required([:label])
   end
 end
 
 defmodule AllowForSpawnedProcessesBadTest do
   use ExUnit.Case, async: false
 
-  alias TestCritic.Repo
+  alias Ecto.Adapters.SQL.Sandbox
   alias SandboxAllowBad.Item
+  alias TestCritic.Repo
 
   setup do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    # BAD: switching to shared mode so Tasks can access the DB without explicit allow.
-    # This masks the problem. In a real :manual sandbox setup, omitting Sandbox.allow
-    # would cause DBConnection.OwnershipError in any spawned process.
-    Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
-    :ok
+    :ok = Sandbox.checkout(Repo)
   end
 
-  # BAD: In a real :manual sandbox setup (correct for test suites), this Task
-  # would raise DBConnection.OwnershipError because Sandbox.allow was never called.
-  # Using {:shared, self()} mode here to demonstrate the structural pattern without
-  # crashing — but the structural anti-pattern is missing the Sandbox.allow call.
-  test "Task without Sandbox.allow — would fail in :manual sandbox mode" do
-    n = System.unique_integer([:positive])
+  test "a spawned process without Sandbox.allow cannot reach the database" do
+    test_pid = self()
 
-    task = Task.async(fn ->
-      # BAD: no Sandbox.allow(Repo, parent, self()) before this call
-      # In :manual sandbox mode this raises DBConnection.OwnershipError
-      Repo.insert!(Item.changeset(%Item{}, %{label: "item-#{n}"}))
+    # BAD: spawn/1 records no caller, and nothing allowed this process.
+    spawn(fn ->
+      result =
+        try do
+          Repo.insert!(%Item{label: "never-written"})
+        rescue
+          error in DBConnection.OwnershipError -> {:ownership_error, error}
+        end
+
+      send(test_pid, result)
     end)
 
-    # This only works because we switched to {:shared, self()} mode.
-    # In a real test suite with Sandbox in :manual mode, Task.await would
-    # surface the OwnershipError crash.
-    item = Task.await(task)
-    assert item.label == "item-#{n}"
+    assert_receive {:ownership_error, %DBConnection.OwnershipError{}}, 5_000
   end
 end
 

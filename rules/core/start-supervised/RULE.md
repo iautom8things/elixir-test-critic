@@ -4,9 +4,10 @@ title: "Use start_supervised for process cleanup"
 category: core
 severity: critical
 summary: >
-  Start processes in tests using `start_supervised!/2` so ExUnit automatically
-  shuts them down after the test completes. Manual `GenServer.start_link` without
-  supervision leaks processes between tests, causing interference and flakiness.
+  Start processes in tests using `start_supervised!/2` so ExUnit stops them, in
+  order, before the next test starts. A process started with a bare `start_link`
+  only dies some time after the test process exits, and one started unlinked or
+  under another supervisor does not die at all.
 principles:
   - async-default
   - thin-processes
@@ -23,21 +24,27 @@ does_not_apply_when:
 
 # Use start_supervised for process cleanup
 
-`start_supervised!/2` registers the started process with ExUnit's test supervisor.
-When the test ends — whether it passes, fails, or raises — ExUnit stops the process.
-Processes started with bare `GenServer.start_link` or `Agent.start_link` are not
-cleaned up automatically and continue running until the VM exits or crashes.
+`start_supervised!/2` starts the process under ExUnit's test supervisor. When the
+test ends, whether it passes, fails, or raises, ExUnit stops the process and waits
+for it to be gone before the next test starts. Children stop in the reverse of
+their start order.
+
+A bare `GenServer.start_link` or `Agent.start_link` gives a weaker guarantee. The
+process is linked to the test process, so it does die when the test process exits.
+But nothing waits for it:
 
 ## Problem
 
-When a test starts a process without supervision, that process outlives the test.
-The next test may encounter the leftover process:
-
-- If two tests start a process registered under the same name, the second test
-  crashes with `{:error, {:already_started, pid}}`
-- Leaked processes accumulate state that bleeds into later tests
-- In async test runs, leaked processes from one test can receive messages from
-  another test's operations, causing inexplicable failures
+- The exit signal is asynchronous. The next test can start while the old process
+  is still alive. If both register the same name, the second test crashes with
+  `{:error, {:already_started, pid}}`, and only on some runs.
+- Nothing orders the shutdown. A process that depends on another can outlive it
+  for a moment and log errors or crash during teardown.
+- `on_exit` callbacks run after the test process has exited, so a callback that
+  calls the process races its death.
+- A process started with `start` instead of `start_link`, started from a spawned
+  process, or started under an application supervisor is not linked to the test
+  at all. It lives until something stops it (see ETC-ISO-006).
 
 These bugs are notoriously hard to diagnose because the failing test is not the
 one that created the problem.
@@ -60,7 +67,8 @@ one that created the problem.
 setup do
   {:ok, pid} = MyCache.start_link([])
   %{cache: pid}
-  # Process leaks when the test ends — next test may find it running
+  # Dies only after the test process exits. Nothing waits for it, so the next
+  # test can start while it is still running.
 end
 ```
 
@@ -70,7 +78,7 @@ end
 setup do
   pid = start_supervised!(MyCache)
   %{cache: pid}
-  # ExUnit stops MyCache after this test, regardless of pass/fail
+  # ExUnit stops MyCache and waits for it before the next test, pass or fail
 end
 ```
 
@@ -93,4 +101,3 @@ end
 
 - [ExUnit.Callbacks — start_supervised/2](https://hexdocs.pm/ex_unit/ExUnit.Callbacks.html#start_supervised/2)
 - [ExUnit.Callbacks — start_supervised!/2](https://hexdocs.pm/ex_unit/ExUnit.Callbacks.html#start_supervised!/2)
-- [Saša Jurić — "Testing concurrent Elixir code"](https://www.erlang-in-anger.com/)

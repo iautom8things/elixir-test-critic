@@ -72,4 +72,3 @@ end
 ## Further Reading
 
 - [ExUnit.Case — test/3](https://hexdocs.pm/ex_unit/ExUnit.Case.html#test/3)
-- [Chris McCord — "Naming tests"](https://phoenixframework.org/blog/testing-channels)

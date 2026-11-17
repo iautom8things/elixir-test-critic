@@ -92,5 +92,5 @@ end
 
 ## Further Reading
 
-- [Phoenix Verified Routes guide](https://hexdocs.pm/phoenix/verified_routes.html)
+- [Phoenix.VerifiedRoutes](https://hexdocs.pm/phoenix/Phoenix.VerifiedRoutes.html)
 - [Phoenix.VerifiedRoutes docs](https://hexdocs.pm/phoenix/Phoenix.VerifiedRoutes.html)

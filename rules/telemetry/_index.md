@@ -31,7 +31,7 @@ valid across environments.
 | ID | Slug | Title | Severity |
 |----|------|-------|----------|
 | ETC-TELE-001 | use-telemetry-test | Use :telemetry_test.attach_event_handlers/2 | recommendation |
-| ETC-TELE-002 | assert-received-for-sync | Use assert_received for synchronous telemetry events | warning |
+| ETC-TELE-002 | assert-received-for-sync | Use assert_received for synchronous telemetry events | recommendation |
 | ETC-TELE-003 | detach-handlers | Always detach telemetry handlers after tests | warning |
 | ETC-TELE-004 | test-shape-not-values | Assert event shape, not exact measurement values | warning |
 | ETC-TELE-005 | filter-events-by-origin | Filter telemetry events by origin in async tests | warning |

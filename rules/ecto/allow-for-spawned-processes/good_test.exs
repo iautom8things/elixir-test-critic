@@ -1,8 +1,11 @@
 # EXPECTED: passes
+# Demonstrates: a process the test did not start as a Task gets its database
+# access from Sandbox.allow/3. A Task needs no allowance, because the sandbox
+# finds the test's connection through the Task's $callers.
 Mix.install([:ecto_sql, :ecto_sqlite3])
 Code.require_file("../../_support/db.exs", __DIR__)
 
-Ecto.Adapters.SQL.Sandbox.checkout(TestCritic.Repo)
+:ok = Ecto.Adapters.SQL.Sandbox.checkout(TestCritic.Repo)
 Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
   TestCritic.Repo.query!("""
   CREATE TABLE IF NOT EXISTS sandbox_allow_items (
@@ -19,63 +22,51 @@ ExUnit.start(autorun: false)
 
 defmodule SandboxAllow.Item do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "sandbox_allow_items" do
     field :label, :string
     timestamps()
   end
+end
 
-  def changeset(item, attrs) do
-    item
-    |> cast(attrs, [:label])
-    |> validate_required([:label])
+defmodule SandboxAllow.Writer do
+  use Agent
+
+  def start_link(_opts), do: Agent.start_link(fn -> nil end)
+
+  def write(pid, label) do
+    Agent.get(pid, fn _ -> TestCritic.Repo.insert!(%SandboxAllow.Item{label: label}) end)
   end
 end
 
 defmodule AllowForSpawnedProcessesGoodTest do
   use ExUnit.Case, async: false
 
-  alias TestCritic.Repo
   alias Ecto.Adapters.SQL.Sandbox
-  alias SandboxAllow.Item
+  alias SandboxAllow.{Item, Writer}
+  alias TestCritic.Repo
 
   setup do
     :ok = Sandbox.checkout(Repo)
   end
 
-  test "Task with Sandbox.allow can access the DB" do
-    parent = self()
-    n = System.unique_integer([:positive])
+  test "a supervised worker writes after Sandbox.allow" do
+    writer = start_supervised!(Writer)
+    # GOOD: the worker was started by ExUnit's supervisor, not by this test
+    # process, so it has no path to the test's connection until allowed.
+    Sandbox.allow(Repo, self(), writer)
 
-    task = Task.async(fn ->
-      # GOOD: allow shares the test's sandbox connection with this task process
-      Sandbox.allow(Repo, parent, self())
-      Repo.insert!(Item.changeset(%Item{}, %{label: "item-#{n}"}))
-    end)
+    item = Writer.write(writer, "from-worker")
 
-    item = Task.await(task)
-    assert item.label == "item-#{n}"
-
-    # Verify the record is visible in the same sandbox
-    fetched = Repo.get!(Item, item.id)
-    assert fetched.label == "item-#{n}"
+    assert Repo.get!(Item, item.id).label == "from-worker"
   end
 
-  test "multiple tasks each allowed can run concurrently" do
-    parent = self()
+  test "a Task uses the test's connection with no allowance" do
+    task = Task.async(fn -> Repo.insert!(%Item{label: "from-task"}) end)
 
-    tasks = for i <- 1..3 do
-      n = System.unique_integer([:positive])
-      Task.async(fn ->
-        Sandbox.allow(Repo, parent, self())
-        Repo.insert!(Item.changeset(%Item{}, %{label: "concurrent-#{n}-#{i}"}))
-      end)
-    end
+    item = Task.await(task)
 
-    items = Task.await_many(tasks)
-    assert length(items) == 3
-    assert Enum.all?(items, &(&1.id != nil))
+    assert Repo.get!(Item, item.id).label == "from-task"
   end
 end
 

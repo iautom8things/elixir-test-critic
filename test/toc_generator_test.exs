@@ -43,6 +43,25 @@ defmodule TestCritic.TocGeneratorTest do
     assert content =~ "warning"
   end
 
+  test "takes a category description from below the index's front matter" do
+    File.write!(Path.join([@fixture_dir, "core", "_index.md"]), """
+    ---
+    category: core
+    title: "Core Rules"
+    ---
+
+    # Core Rules
+
+    Rules for the fundamentals.
+    """)
+
+    assert {:ok, _} = TocGenerator.generate(@fixture_dir, @template_path, @output_path)
+    content = File.read!(@output_path)
+
+    assert content =~ "Rules for the fundamentals."
+    refute content =~ "category: core"
+  end
+
   test "includes severity sections" do
     assert {:ok, _} = TocGenerator.generate(@fixture_dir, @template_path, @output_path)
     content = File.read!(@output_path)

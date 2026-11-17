@@ -31,9 +31,10 @@ defmodule TELE003.GoodTest do
            |> Enum.any?(fn h -> h.id == handler_id end)
   end
 
-  test "prefers :telemetry_test helper which auto-cleans up" do
-    # Using the official helper avoids manual on_exit entirely
+  test "detaches a :telemetry_test handler too" do
+    # The helper returns the handler id and leaves the handler attached
     ref = :telemetry_test.attach_event_handlers(self(), [[:tele003, :task, :stop]])
+    on_exit(fn -> :telemetry.detach(ref) end)
 
     :telemetry.execute([:tele003, :task, :stop], %{duration: 12}, %{name: "sync"})
 

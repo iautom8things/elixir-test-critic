@@ -33,7 +33,7 @@ verifies library behaviour, you are:
 
 Test **the logic your application contributes**:
 
-- Custom validation rules in changesets (not that `validate_required` works)
+- The rules your changeset function applies, through that function (not a changeset the test builds itself)
 - Business rules derived from Ecto query results (not that Ecto can query)
 - The structure of your Phoenix controller responses when your logic changes them
 - Error handling logic built on top of library error tuples
@@ -41,9 +41,13 @@ Test **the logic your application contributes**:
 ## Detection
 
 - Tests that only call library functions with constants and assert library return values
-- Changeset tests that verify field casting without asserting custom validations
+- Tests that build a changeset inline with `cast/3` and `validate_*` and never
+  call the application's changeset function (see ETC-ECTO-003)
 - Tests that duplicate what the library's own test suite already verifies
-- Schema tests: `assert changeset.valid?` with no invalid cases
+
+A test that calls your own function is not a library test, even when the function
+is a thin wrapper. `MyApp.User.changeset/2` casting `:email` is your decision: the
+test fails if someone drops `:email` from the cast list.
 
 ## Bad
 
@@ -51,9 +55,9 @@ Test **the logic your application contributes**:
 defmodule MyApp.UserTest do
   use ExUnit.Case, async: true
 
-  test "user changeset casts email field" do
-    # Testing that Ecto.Changeset.cast/3 works — not your code
-    changeset = MyApp.User.changeset(%MyApp.User{}, %{email: "alice@example.com"})
+  test "cast keeps permitted fields" do
+    # Never calls MyApp.User.changeset/2. Tests that Ecto.Changeset.cast/3 works.
+    changeset = Ecto.Changeset.cast(%MyApp.User{}, %{email: "alice@example.com"}, [:email])
     assert changeset.changes.email == "alice@example.com"
   end
 
@@ -100,4 +104,4 @@ or does it mean the library is broken?" If the answer is "the library", delete t
 ## Further Reading
 
 - [Testing Elixir — Contextual testing](https://pragprog.com/titles/lmelixir/testing-elixir/)
-- [Don't test your framework](https://thoughtbot.com/blog/don-t-stub-the-system-under-test)
+- [thoughtbot: Don't Stub the System Under Test](https://thoughtbot.com/blog/don-t-stub-the-system-under-test)

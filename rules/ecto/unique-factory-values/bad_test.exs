@@ -1,9 +1,9 @@
 # EXPECTED: passes
 # BAD PRACTICE: The factory uses a hardcoded email "user@test.com".
-# In this sequential script the two calls succeed because each test gets a
-# rolled-back sandbox connection. BUT in a real async test suite both tests would
-# share the same email and the second insert would fail with a unique constraint error.
-# The test is written to demonstrate the structural problem, not to actually collide.
+# In this script each test calls the factory once inside its own rolled-back
+# sandbox transaction, so both succeed. A test that called the factory twice would
+# fail on the second insert, and concurrent tests sharing the value would wait on
+# each other's row lock. The script shows the shape, not a collision.
 Mix.install([:ecto_sql, :ecto_sqlite3])
 Code.require_file("../../_support/db.exs", __DIR__)
 
@@ -47,7 +47,7 @@ defmodule BadFactory.Fixtures do
   alias TestCritic.Repo
   alias BadFactory.User
 
-  # BAD: hardcoded email — will collide when two async tests call this simultaneously
+  # BAD: hardcoded email. A second call in the same test hits the unique index.
   def user_fixture do
     Repo.insert!(User.changeset(%User{}, %{
       email: "user@test.com",
@@ -66,18 +66,18 @@ defmodule UniqueFactoryValuesBadTest do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
-  # In sequential mode these pass. With async: true and a shared schema,
-  # calling user_fixture() in two concurrent tests would cause:
-  #   ** (Ecto.ConstraintError) unique constraint "bad_factory_users_email_index" violated
-  test "creates a user (sequential — works only because sandbox rolls back between tests)" do
+  test "one call per test works, because the sandbox rolls each test back" do
     user = user_fixture()
     assert user.email == "user@test.com"
   end
 
-  test "creates another user — hardcoded email is the problem" do
-    # This works sequentially. Async = collision waiting to happen.
-    user = user_fixture()
-    assert user.email == "user@test.com"
+  test "a second call in the same test fails on the unique index" do
+    user_fixture()
+
+    # The hardcoded default makes the factory unusable twice in one test.
+    assert_raise Ecto.InvalidChangesetError, ~r/has already been taken/, fn ->
+      user_fixture()
+    end
   end
 end
 

@@ -107,4 +107,3 @@ end
 ## Further Reading
 
 - [Elixir — `with` special form](https://hexdocs.pm/elixir/Kernel.SpecialForms.html#with/1)
-- [Saša Jurić — "Error handling in Elixir"](https://medium.com/very-big-things/towards-maintainable-elixir-testing-part-3-of-4-7aa45d8e1cf9)

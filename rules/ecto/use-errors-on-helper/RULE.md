@@ -79,5 +79,5 @@ end
 
 ## Further Reading
 
-- [Phoenix test helpers — errors_on/1](https://github.com/phoenixframework/phoenix/blob/main/installer/templates/phx_test/support/data_case.ex)
+- [Phoenix test helpers: errors_on/1](https://github.com/phoenixframework/phoenix/blob/main/installer/templates/phx_ecto/data_case.ex.eex)
 - [Ecto.Changeset.traverse_errors/2](https://hexdocs.pm/ecto/Ecto.Changeset.html#traverse_errors/2)

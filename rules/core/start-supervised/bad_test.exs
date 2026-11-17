@@ -1,8 +1,8 @@
 # EXPECTED: passes
-# BAD PRACTICE: Agent started with bare start_link — not registered with ExUnit's
-# supervisor. The agent leaks after each test and accumulates in the VM. In a real
-# test suite with named processes, this causes {:already_started, pid} crashes in
-# later tests.
+# BAD PRACTICE: Agent started with bare start_link, outside ExUnit's supervisor.
+# The agent dies only after the test process exits and nothing waits for it. In a
+# real suite with named processes, the next test can start first and crash with
+# {:already_started, pid}. This script passes because its agents are unnamed.
 Mix.install([])
 
 ExUnit.start(autorun: true)
@@ -22,7 +22,7 @@ defmodule StartSupervisedBadTest do
   use ExUnit.Case, async: true
 
   setup do
-    # Wrong: bare start_link without start_supervised — process leaks after test
+    # Wrong: bare start_link. Nothing stops this before the next test starts.
     {:ok, pid} = StartSupervisedBadAgent.start_link(nil)
     %{agent: pid}
   end

@@ -111,5 +111,4 @@ end
 ## Further Reading
 
 - [José Valim — "Mocks and explicit contracts"](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/)
-- [Elixir — Pure functions and immutability](https://elixir-lang.org/getting-started/basic-types.html)
 - [Testing Elixir (Pragmatic) — Unit testing pure functions](https://pragprog.com/titles/lmelixir/testing-elixir/)

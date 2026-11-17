@@ -100,5 +100,4 @@ end
 ## Further Reading
 
 - [José Valim — "Mocks and explicit contracts"](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/)
-- [Dependency injection in Elixir (Dashbit blog)](https://dashbit.co/)
 - [Testing Elixir (Pragmatic) — Chapter on test isolation](https://pragprog.com/titles/lmelixir/testing-elixir/)

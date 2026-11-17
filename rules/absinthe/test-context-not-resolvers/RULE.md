@@ -126,5 +126,4 @@ end
 
 ## Further Reading
 
-- [benwilson512 on resolver design](https://github.com/absinthe-graphql/absinthe/issues/1117)
 - [Absinthe context and authentication guide](https://hexdocs.pm/absinthe/context-and-authentication.html)

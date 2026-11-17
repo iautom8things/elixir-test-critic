@@ -4,7 +4,8 @@
 # silently miss the violation — the INSERT succeeds and the test's {:error, _} branch
 # is never hit.
 #
-# SQLite constraints are always immediate, so this script passes.
+# SQLite checks unique indexes immediately (it can defer only foreign keys), so
+# this script passes.
 # The structural problem only manifests in Postgres with deferred constraints.
 # The bad test below shows the wrong assertion pattern: checking for an error
 # at INSERT when using deferred constraints — in Postgres this would produce a
@@ -66,7 +67,7 @@ defmodule DeferredConstraintGotchaBadTest do
   # assert {:error, _} = ... line — or worse, a developer might flip the assertion
   # to assert {:ok, _} and lose coverage entirely.
   #
-  # In SQLite (used here), this works correctly because SQLite is always immediate.
+  # In SQLite (used here), this works correctly because a unique index is always immediate.
   # The problem only bites in production Postgres schemas.
   test "demonstrates the deferred constraint gotcha pattern" do
     n = System.unique_integer([:positive])

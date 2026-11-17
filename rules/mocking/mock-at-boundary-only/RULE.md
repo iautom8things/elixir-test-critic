@@ -110,4 +110,4 @@ end
 
 - [José Valim — "Mocks and explicit contracts"](http://blog.plataformatec.com.br/2015/10/mocks-and-explicit-contracts/)
 - [Growing Object-Oriented Software — "Don't Mock What You Don't Own"](http://www.growing-object-oriented-software.com/)
-- [Mox — README and design rationale](https://hexdocs.pm/mox/readme.html)
+- [Mox documentation](https://hexdocs.pm/mox/Mox.html)

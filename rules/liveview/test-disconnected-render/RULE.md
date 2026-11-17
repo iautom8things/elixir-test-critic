@@ -2,17 +2,19 @@
 id: ETC-LV-001
 title: "Test both disconnected and connected renders"
 category: liveview
-severity: warning
+severity: recommendation
 summary: >
-  Use `get(conn, path)` to verify the static (disconnected) HTML and then
-  `live(conn, path)` to test the connected LiveView. Testing only the connected
-  state misses the initial static render that users and crawlers see.
+  `live(conn, path)` runs the disconnected mount but hands back only the
+  connected HTML. When a LiveView renders differently before the WebSocket
+  connects, assert on the static HTML with `get(conn, path)` as well.
 principles:
   - boundary-testing
 applies_when:
-  - "Testing any LiveView that is rendered server-side before the WebSocket connects"
-  - "LiveViews exposed to crawlers, SEO, or users with JavaScript disabled"
-  - "Any LiveView mounted via a router `live` macro"
+  - "The LiveView branches on `connected?(socket)` in mount or render"
+  - "The static HTML matters on its own: crawlers, link previews, meta tags, users without JavaScript"
+does_not_apply_when:
+  - "The LiveView renders the same content connected and disconnected"
+  - "The test targets an interaction that only exists once connected"
 ---
 
 # Test both disconnected and connected renders
@@ -24,21 +26,27 @@ A Phoenix LiveView goes through two render phases:
 2. **Connected** (WebSocket): the client upgrades and the LiveView re-mounts
    with a live socket. This is the interactive state.
 
-Testing only the connected state leaves the disconnected render — and any error
-that exists only in that path — completely uncovered.
+`live(conn, path)` goes through both. It issues the HTTP GET first, then
+connects. A `mount/3` that crashes during the GET fails the test, so `live/2`
+alone already covers "does the disconnected mount run".
 
 ## Problem
 
-`live(conn, path)` exercises only the WebSocket-connected mount. If `mount/3`
-crashes during the HTTP GET (before the WebSocket upgrade), `live/2` will not
-catch it. Conversely, some assigns are set differently in disconnected mode
-(`connected?(socket)` returns `false`), so bugs in that branch are invisible to
-pure LiveView tests.
+What `live/2` does not give you is the disconnected HTML. The `html` it returns
+is the connected render. If the view shows something different before it
+connects, such as a placeholder, a skeleton, or content gated on
+`connected?(socket)`, no assertion sees it. A wrong page title, missing meta
+tags, or an empty body for crawlers passes unnoticed.
 
 ## Detection
 
-- Test files that `live/2` without a preceding `get/2` on the same path
-- Test modules with no assertions using `html_response/2` for LiveView routes
+- A LiveView that calls `connected?(socket)`, with no test asserting on
+  `html_response/2` for its route
+- A route whose static HTML matters (public, indexed, shared as a link), tested
+  only through `live/2`
+
+Do not flag a test only because it calls `live/2` without a `get/2`. Check the
+LiveView first.
 
 ## Bad
 
@@ -49,8 +57,9 @@ defmodule MyAppWeb.PostLiveTest do
   test "renders the post", %{conn: conn} do
     post = insert(:post, title: "Hello")
 
-    # Skips the disconnected render entirely
-    {:ok, view, html} = live(conn, ~p"/posts/#{post.id}")
+    # Runs the disconnected mount, but `html` is the connected render.
+    # If the static page shows a placeholder until connected, nothing checks it.
+    {:ok, _view, html} = live(conn, ~p"/posts/#{post.id}")
 
     assert html =~ "Hello"
   end
@@ -79,11 +88,13 @@ end
 
 ## When This Applies
 
-- All LiveViews mounted via the router
-- Any LiveView that has meaningful content in the initial render
+- LiveViews whose mount or render branches on `connected?(socket)`
+- Public pages where the static HTML is what crawlers and link previews read
 
 ## When This Does Not Apply
 
+- LiveViews that render the same content in both phases. `live/2` already runs
+  the disconnected mount, so a separate `get/2` adds nothing.
 - LiveViews that redirect immediately on mount — the disconnected render is empty
 - LiveViews embedded inside another LiveView (not directly routable)
 - Testing a specific interaction that only occurs in the connected state — add

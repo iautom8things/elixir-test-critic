@@ -2,18 +2,16 @@
 id: ETC-ABS-004
 title: "Call Absinthe.Test.prime/1 in test_helper.exs"
 category: absinthe
-severity: warning
+severity: recommendation
 summary: >
-  Add `Absinthe.Test.prime(MyApp.Schema)` to `test/test_helper.exs`. Absinthe
-  lazily compiles schemas on first use. Without priming, the first test to
-  execute a query against the schema bears the full compilation cost and can
-  cause flaky timeouts, especially in concurrent test suites.
+  Add `Absinthe.Test.prime(MyApp.Schema)` to `test/test_helper.exs`. In the test
+  environment Mix loads code lazily, so the first GraphQL query in the suite also
+  loads Absinthe's modules. That takes several milliseconds and can push a
+  message-passing test past a tight timeout.
 principles:
   - async-default
 applies_when:
-  - "Any project using Absinthe with schema tests"
-  - "Concurrent (async: true) Absinthe test suites"
-  - "CI environments where test timeouts are tight"
+  - "A project has Absinthe tests that wait for messages with short timeouts: subscriptions, PubSub, assert_receive"
 related_rules:
   - ETC-CORE-001
   - ETC-ABS-002
@@ -21,34 +19,28 @@ related_rules:
 
 # Call Absinthe.Test.prime/1 in test_helper.exs
 
-Absinthe compiles schema modules lazily — the first execution of a query
-against a schema triggers compilation of the full type system. This
-compilation:
+In the test environment Mix loads modules the first time they are used.
+Absinthe is a large code base, so the first GraphQL query in a test run also
+loads most of Absinthe. Absinthe's documentation puts the cost at several
+milliseconds.
 
-- Takes hundreds of milliseconds for a non-trivial schema
-- Is not parallelised across test processes
-- Can cause the first test to hit the schema to exceed its timeout
-- Can cause races when multiple async tests start simultaneously and each
-  tries to trigger the compilation
-
-`Absinthe.Test.prime/1` compiles the schema synchronously during test suite
-startup, before any test begins, so all tests see a pre-compiled schema.
+`Absinthe.Test.prime/1` runs the introspection query against the schema during
+suite startup. That loads the code before any test begins. It does not compile
+the schema: Absinthe schemas are compiled with the rest of the application.
 
 ## Problem
 
-Without priming, async test suites see intermittent failures like:
-
-```
-** (ExUnit.TimeoutError) test timed out after 60000ms
-```
-
-or worse, tests fail nondeterministically because the first test always bears
-the compilation cost and sometimes exceeds its timeout.
+The cost is small and lands on whichever test runs a query first. It matters
+only for a test that expects a message within a short window, such as an
+`assert_receive` with the default 100 ms timeout on a subscription push. On a
+loaded CI machine the code loading can use up enough of that window to fail the
+test, and the failure moves to a different test each time the order changes.
 
 ## Detection
 
-- No call to `Absinthe.Test.prime/1` in `test/test_helper.exs`
-- Flaky timeouts in the first Absinthe schema test to run
+- `:absinthe` is a dependency, tests use `assert_receive` on GraphQL results or
+  subscription pushes, and `test/test_helper.exs` has no `Absinthe.Test.prime/1`
+- An intermittent timeout in whichever Absinthe test happens to run first
 
 ## Bad
 
@@ -61,7 +53,7 @@ Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)
 ## Good
 
 ```elixir
-# test/test_helper.exs — schema is compiled before tests begin
+# test/test_helper.exs: Absinthe's code is loaded before tests begin
 ExUnit.start()
 Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)
 Absinthe.Test.prime(MyApp.Schema)
@@ -76,16 +68,12 @@ Absinthe.Test.prime(MyApp.AdminSchema)
 
 ## When This Applies
 
-- Any project that tests against an Absinthe schema
-- Especially important for async (`async: true`) test suites
-- CI pipelines with tight test timeout budgets
+- Projects with Absinthe tests that assert on messages inside short timeouts
 
 ## When This Does Not Apply
 
-- Projects that do not have any direct Absinthe schema tests (only HTTP
-  tests through ConnCase with no `Absinthe.run/3` calls) — the schema is
-  warmed by the first HTTP request in that case, but priming is still
-  recommended
+- Suites with no timing-sensitive Absinthe tests. Priming is harmless there and
+  buys nothing measurable.
 
 ## Further Reading
 

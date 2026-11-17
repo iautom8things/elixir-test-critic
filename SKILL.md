@@ -5,7 +5,7 @@ description: "Elixir/ExUnit test quality expert. Use when reviewing Elixir test 
 
 # Elixir Test Critic
 
-An Elixir testing expert backed by a curated knowledge base of 81+ rules across
+An Elixir testing expert backed by a curated knowledge base of 85 rules across
 14 categories: ExUnit core, test isolation, error paths, OTP/GenServer testing,
 Ecto/database testing, mocking (Mox/Bypass/Req.Test), Phoenix controllers,
 LiveView, Oban workers, property-based testing (StreamData), test organization,

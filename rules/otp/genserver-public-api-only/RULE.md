@@ -14,6 +14,7 @@ applies_when:
   - "Verifying that a GenServer responds correctly to messages or calls"
   - "Writing tests that should survive internal refactoring"
 does_not_apply_when:
+  - "The call is a synchronisation barrier: `:sys.get_state(pid)` with its result discarded, to wait until the process has handled earlier messages"
   - "The GenServer has no public API that surfaces the state being tested"
   - "Debugging during development — :sys.get_state/1 is a legitimate debugging tool"
 related_rules:
@@ -40,7 +41,8 @@ missing public function.
 
 ## Detection
 
-- Any call to `:sys.get_state/1` or `:sys.replace_state/2` in test files
+- A call to `:sys.get_state/1` whose result is bound, matched or asserted on
+- Any call to `:sys.replace_state/2` in test files
 - Assertions on raw map fields that match internal GenServer state shape
 - Test setup that uses `:sys.replace_state/2` to pre-configure process state
 
@@ -83,6 +85,10 @@ end
 
 ## When This Does Not Apply
 
+- **Synchronisation barriers.** `:sys.get_state(pid)` with its result thrown away
+  is a common way to wait until a process has handled every message sent before
+  it, for example after a `cast`. That call reads no state and couples the test
+  to nothing. Only flag calls whose result the test uses.
 - The GenServer genuinely has no public API that exposes the state you need to verify.
   In this case, first consider adding the missing API function. If that's not possible
   or desirable (e.g., a third-party GenServer you don't control), `:sys.get_state/1`

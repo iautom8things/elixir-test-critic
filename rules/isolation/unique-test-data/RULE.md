@@ -2,51 +2,71 @@
 id: ETC-ISO-002
 title: "Generate unique values for constrained fields"
 category: isolation
-severity: critical
+severity: warning
 summary: >
   Use unique values for fields with uniqueness constraints (emails, usernames,
-  slugs, external IDs) in each test. Hardcoded values shared across tests cause
-  constraint violation errors when tests run concurrently or when the database
-  is not fully reset between tests.
+  slugs, external IDs) in each test. Under the SQL sandbox, two concurrent tests
+  that insert the same value do not get a constraint error: one waits on the
+  other's lock, which slows the suite and can deadlock. Outside a sandbox
+  transaction, the same value is a real constraint violation.
 principles:
   - async-default
   - honest-data
 applies_when:
-  - "Tests that insert records into a database with uniqueness constraints"
-  - "Tests that create data with unique identifiers (emails, usernames, API keys, slugs)"
-  - "Tests using Ecto with SQL Sandbox in async mode"
+  - "Async tests that insert rows with unique-constrained fields through the SQL sandbox"
+  - "Data inserted outside a per-test transaction: setup_all, seeds, automatic sandbox mode, a second database or service"
+  - "In-memory stores (ETS, GenServer state) keyed by a value several tests reuse"
 does_not_apply_when:
-  - "Tests run with async: false and uniqueness is not a database concern (e.g., in-memory only tests)"
+  - "The test is about the uniqueness constraint and inserts the same value twice on purpose"
+  - "A value is unique only within a scope (per tenant, per parent) and each test creates its own scope"
 ---
 
 # Generate unique values for constrained fields
 
-When multiple tests insert records with the same hardcoded email, username, or other
-unique-constrained field, they collide. In async mode this collision is a race; in
-sequential mode it still occurs when the database is shared across tests without full
-isolation (e.g., when using SQL Sandbox in manual mode with `allow` for concurrent
-processes).
+When multiple tests insert records with the same hardcoded email, username, or
+other unique-constrained field, they contend for the same unique index entry.
+What happens next depends on whether each test runs inside its own sandbox
+transaction.
 
 ## Problem
 
-Hardcoded test data creates two classes of failures:
+**Inside the SQL sandbox (the usual case).** Each test runs in a transaction that
+is rolled back. When a second test inserts a value the first has already
+inserted, the database makes the second wait for the first transaction to end.
+The first rolls back, and the second insert then succeeds. So there is no
+constraint error. The cost is different:
 
-1. **Concurrent collision**: Two async tests both try to insert `email: "alice@example.com"`.
-   One succeeds, the other gets a constraint violation. The failure is non-deterministic —
-   it depends on which test runs first.
+1. **Lock waits.** Tests that share a value run one after another on that row,
+   so an `async: true` suite gets slower without any failure to point at.
+2. **Deadlocks.** If two tests each hold a lock the other needs, such as two
+   shared values inserted in opposite orders, the database kills one of them.
+   That failure is intermittent. Ecto's sandbox documentation describes both.
 
-2. **Sequential pollution**: Without full database rollback, the first test's data persists
-   and the second test fails with a unique constraint error even in sequential mode.
+**Outside a sandbox transaction.** The same value is a real unique violation,
+and an order-dependent one, when the data outlives the test:
 
-The fix is to generate unique values per test. Common techniques:
+- rows inserted in `setup_all`, seeds, or migrations
+- suites or helpers running in automatic sandbox mode (see ETC-ISO-004)
+- a second database, an external service, or an in-memory store keyed by the value
+- two inserts of the same hardcoded value inside one test, for example through
+  a factory with a fixed default (see ETC-ECTO-005)
+
+The fix is the same in every case: generate a unique value per test.
+
 - `System.unique_integer([:positive])` for numeric uniqueness
 - Appending a unique integer to a base string: `"user_#{System.unique_integer([:positive])}@example.com"`
 
 ## Detection
 
-- Hardcoded email, username, slug, or external ID strings in multiple tests in the same module
-- `%{email: "test@example.com"}` appearing in more than one test or fixture
-- Constraint violation errors (`{:error, changeset}` with `:unique_constraint` in tests)
+- The same email, username, slug, or external ID literal in several async tests
+  that each insert it
+- A hardcoded unique value inserted in `setup_all` or shared setup
+- A deadlock or lock-timeout error from the database in an async suite
+- A unique-constraint error on data the failing test did not create
+
+Before reporting, confirm the field has a unique index. A repeated literal in a
+column with no unique constraint is not a finding. Do not describe the outcome
+as a constraint violation when each test runs in its own sandbox transaction.
 
 ## Bad
 
@@ -58,7 +78,8 @@ describe "create/1" do
   end
 
   test "email is downcased on create" do
-    # Same email — constraint violation if both tests run concurrently or sequentially
+    # Same email as the test above. Run concurrently, one waits on the other's
+    # row lock. If the data outlived the test, this would be a unique violation.
     assert {:ok, user} = Accounts.create(%{email: "alice@example.com"})
     assert user.email == "alice@example.com"
   end
@@ -86,18 +107,18 @@ end
 
 ## When This Applies
 
-- Database tests with uniqueness constraints on any field
+- Async database tests that insert rows with a unique index on any field
+- Data created outside a per-test transaction
 - In-memory stores (ETS, GenServer state) with unique key requirements
-- Any test where the same key being inserted twice would cause an error
 
 ## When This Does Not Apply
 
-- Tests where async: false AND each test gets a full database rollback between runs —
-  uniqueness is not a concern if the record never persists across test boundaries
 - Testing the uniqueness constraint itself — you intentionally insert the same value
   twice to verify the constraint is enforced
+- A value that is unique only within a scope each test creates for itself
+- Columns with no unique index
 
 ## Further Reading
 
-- [Ecto.Adapters.SQL.Sandbox](https://hexdocs.pm/ecto_sql/Ecto.Adapters.SQL.Sandbox.html)
+- [Ecto.Adapters.SQL.Sandbox: deadlocks](https://hexdocs.pm/ecto_sql/Ecto.Adapters.SQL.Sandbox.html#module-database-locks-and-deadlocks)
 - [ExMachina — factory libraries for Elixir tests](https://github.com/thoughtbot/ex_machina)

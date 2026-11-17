@@ -1,5 +1,5 @@
 # EXPECTED: passes
-# NOTE: SQLite does not support deferred constraints — constraints are always immediate.
+# NOTE: SQLite can defer only foreign keys. The unique index here is always immediate.
 # This test demonstrates correct immediate constraint testing (equivalent to what you
 # get in Postgres after SET CONSTRAINTS ALL IMMEDIATE).
 # For real deferred constraint testing in Postgres, see RULE.md.
@@ -51,7 +51,7 @@ defmodule DeferredConstraintGoodTest do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
-  # GOOD: SQLite checks the constraint immediately — this is what you want in tests.
+  # GOOD: SQLite checks a unique index immediately. This is what you want in tests.
   # In Postgres with a deferred unique constraint, use SET CONSTRAINTS ALL IMMEDIATE
   # before the second insert to force immediate evaluation.
   test "unique position constraint fires immediately on duplicate insert" do

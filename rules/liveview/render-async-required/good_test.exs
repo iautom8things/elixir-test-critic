@@ -13,7 +13,7 @@ Mix.install([])
 #     # html here shows the loading state
 #     assert html =~ "Loading orders..."
 #
-#     # Drive async tasks to completion
+#     # Wait for the async tasks to finish
 #     render_async(view)
 #
 #     # Now assert on the loaded content
@@ -59,7 +59,7 @@ defmodule RenderAsyncGoodTest do
     initial_html = render_loading(state)
     assert initial_html == "Loading orders..."
 
-    # Simulate render_async: drive the task to completion
+    # Simulate render_async: wait for the task to finish
     send(self(), :complete)
     final_state = run_async_task(state)
     final_html = render_loading(final_state)
