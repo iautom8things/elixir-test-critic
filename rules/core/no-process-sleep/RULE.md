@@ -16,6 +16,7 @@ does_not_apply_when:
   - "Deliberate timing tests for rate limiters or debounce logic where sleep IS the behavior under test"
 related_rules:
   - ETC-TELE-002
+enforced_by: credo:TestCritic.Credo.Check.ProcessSleepInTest
 ---
 
 # Never use Process.sleep for synchronization
@@ -46,6 +47,12 @@ asynchronous operation by guessing a duration rather than receiving confirmation
 - `Process.sleep` followed by an assertion that checks state in another process
 - `Process.sleep` followed by `assert_received`
 - Comments like `# wait for the GenServer to process` above a sleep
+
+Credo's default `scope: :test_flow` flags finite sleep statements in `test`,
+`feature`, `property`, `setup`, and `setup_all` bodies, including inline
+branches. It also flags a helper whose only work is sleeping. A `receive`
+with only an `after` clause counts as a sleep. Use `scope: :all` to check sleeps
+in other helpers and callbacks. Both scopes allow a literal `:infinity`.
 
 ## Bad
 

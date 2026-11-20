@@ -18,6 +18,7 @@ does_not_apply_when:
 # sources: ["URL or reference"]
 # conflicts_with: [ETC-CAT-NNN]
 # status: active
+# enforced_by: credo:TestCritic.Credo.Check.<Module>
 ---
 
 # Rule title here

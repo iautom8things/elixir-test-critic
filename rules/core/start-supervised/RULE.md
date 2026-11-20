@@ -20,6 +20,7 @@ applies_when:
 does_not_apply_when:
   - "Testing the start_link function itself — you need the raw result to assert on the pid/error"
   - "Testing process registration under specific names — start_supervised may conflict with name registration tests"
+enforced_by: credo:TestCritic.Credo.Check.NamedProcessOutsideSupervision
 ---
 
 # Use start_supervised for process cleanup
@@ -65,10 +66,9 @@ one that created the problem.
 
 ```elixir
 setup do
-  {:ok, pid} = MyCache.start_link([])
-  %{cache: pid}
-  # Dies only after the test process exits. Nothing waits for it, so the next
-  # test can start while it is still running.
+  # Wrong: bare start_link. Nothing stops this before the next test starts.
+  {:ok, pid} = StartSupervisedBadAgent.start_link(name: __MODULE__)
+  %{agent: pid}
 end
 ```
 

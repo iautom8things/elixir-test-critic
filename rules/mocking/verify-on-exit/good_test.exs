@@ -45,8 +45,6 @@ defmodule MOCK004.VerifyOnExitGoodTest do
     # stub is for setup scenarios where call count is irrelevant
     stub(MOCK004.SMSMock, :send_sms, fn _phone, _body -> :ok end)
 
-    MOCK004.Notifier.notify_user(MOCK004.SMSMock, "+15550003333", "msg")
-    # No assertion on call count — stub just provides the response
-    assert true
+    assert :ok == MOCK004.Notifier.notify_user(MOCK004.SMSMock, "+15550003333", "msg")
   end
 end

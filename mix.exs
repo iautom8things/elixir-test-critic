@@ -7,6 +7,7 @@ defmodule TestCritic.MixProject do
       version: "0.1.0",
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
+      aliases: [credo: ["compile", "credo"]],
       deps: deps()
     ]
   end
@@ -19,7 +20,8 @@ defmodule TestCritic.MixProject do
 
   defp deps do
     [
-      {:yaml_elixir, "~> 2.9"}
+      {:yaml_elixir, "~> 2.9"},
+      {:credo, "~> 1.7.0", runtime: false}
     ]
   end
 end

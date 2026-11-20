@@ -4,7 +4,7 @@
 
 Elixir testing rules that actually run.
 
-85 rules across 14 categories, each paired with a runnable `good_test.exs`
+88 rules across 14 categories, each paired with a runnable `good_test.exs`
 and `bad_test.exs` and traced to one of ten foundational principles. CI
 re-executes every example on every push across Elixir 1.17–1.19 and OTP
 27–28.
@@ -53,6 +53,94 @@ Update later with `/plugin marketplace update elixir-test-critic`, remove with
 Prefer to read the rules yourself? Start at [`toc/RULES_REFERENCE.md`][toc]
 for the condensed catalog, or browse [`rules/`][rules] directly.
 
+## Credo checks
+
+Add Test Critic next to your Credo dependency in `mix.exs`. Keep your existing
+Credo declaration if it resolves to 1.7.x. Replace `<reviewed-commit-sha>` with
+the commit you reviewed so updates to the lint gate are deliberate.
+
+```elixir
+defp deps do
+  [
+    {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+    {:test_critic,
+     github: "iautom8things/elixir-test-critic",
+     ref: "<reviewed-commit-sha>",
+     only: [:dev, :test],
+     runtime: false}
+  ]
+end
+```
+
+Use `checks.extra` for the test checks so Credo keeps its defaults. Credo 1.7
+uses each check's `files` option to filter the files in the current profile.
+The `build-config` profile applies that filter and enables just the build-time
+check, so the ordinary lint run keeps its existing file selection.
+
+```elixir
+alias TestCritic.Credo.Check
+
+config_files = ["config/", "apps/*/config/"]
+
+%{
+  configs: [
+    %{
+      name: "default",
+      checks: %{
+        extra: [
+          {Check.AsyncGlobalState, []},
+          {Check.UnverifiedMoxExpect, []},
+          {Check.ShortReceiveTimeout, []},
+          {Check.ProcessSleepInTest, []},
+          {Check.TrivialAssertion, []},
+          {Check.NamedProcessOutsideSupervision, []}
+        ]
+      }
+    },
+    %{
+      name: "build-config",
+      files: %{included: config_files},
+      checks: %{
+        enabled: [{Check.NondeterministicConfig, files: [included: config_files]}]
+      }
+    }
+  ]
+}
+```
+
+Run `mix deps.get`, `mix credo`, and `mix credo --config-name build-config`.
+All seven checks report high-priority
+warnings and accept Credo's standard check options, including `priority` and
+`files`. Test-only checks recognize `*_test.exs` files under `test/`, including
+umbrella apps and files scanned by absolute path.
+
+| Check | Rule | Check-specific options |
+|-------|------|------------------------|
+| `NondeterministicConfig` | [ETC-ORG-006](rules/organization/deterministic-build-config/RULE.md) | None |
+| `AsyncGlobalState` | [ETC-ISO-001](rules/isolation/no-app-put-env-async/RULE.md), [ETC-ISO-003](rules/isolation/no-shared-ets-async/RULE.md) | None |
+| `UnverifiedMoxExpect` | [ETC-MOCK-004](rules/mocking/verify-on-exit/RULE.md) | `verifying_case_templates: []`. List modules whose setup verifies Mox for every test, such as `[MyApp.DataCase]`. |
+| `ShortReceiveTimeout` | [ETC-CORE-012](rules/core/receive-timeout-budget/RULE.md) | `min_timeout: 500` ms. `macros: [:assert_receive, :assert_push, :assert_reply, :assert_broadcast, :assert_redirect, :assert_patch, :render_async]`. Custom names take the timeout as their last argument. In `test/test_helper.exs`, the check warns when it can determine that `assert_receive_timeout` is missing or below the same minimum. Set `require_configured_default: false` to turn off the helper check. |
+| `ProcessSleepInTest` | [ETC-CORE-005](rules/core/no-process-sleep/RULE.md) | `scope: :test_flow` covers test flow and helpers that only sleep. Use `scope: :all` to include sleeps elsewhere. `excluded_paths: ["test/support"]` is relative to each Mix project. Set it to `[]` to include support code. |
+| `TrivialAssertion` | [ETC-CORE-013](rules/core/assert-observable-results/RULE.md) | None |
+| `NamedProcessOutsideSupervision` | [ETC-CORE-006](rules/core/start-supervised/RULE.md) | None |
+
+For an intentional exception, give the reason on its own comment line and put
+Credo's directive immediately before the reported line.
+
+```elixir
+# The stub must remain busy while the caller times out.
+# credo:disable-for-next-line TestCritic.Credo.Check.ProcessSleepInTest
+Process.sleep(50)
+```
+
+These checks inspect one file at a time. Use the [prose rules][toc] to review
+which process sends a message, what a helper in another file does, and what
+depends on runtime state.
+
+The timeout check reads literal keyword options and variables assigned once
+to a literal list or literal lists joined with `++`. It accepts values and
+options that depend on runtime code.
+
 ## What a review looks like
 
 A finding is tied to a specific rule ID, cites the principle it comes from,
@@ -83,7 +171,7 @@ on the signal instead (principle: assert-don't-sleep).
 rules/
 ├── 00-principles.md     # the ten foundational principles
 ├── _support/            # shared infrastructure for example scripts
-├── core/          (11)  # fundamental ExUnit patterns
+├── core/          (13)  # fundamental ExUnit patterns
 ├── isolation/      (6)  # test isolation
 ├── errors/         (3)  # error-path testing
 ├── otp/            (6)  # GenServer / supervisor testing
@@ -93,7 +181,7 @@ rules/
 ├── liveview/       (8)  # LiveView lifecycle
 ├── oban/           (4)  # Oban workers
 ├── property/       (4)  # StreamData property tests
-├── organization/   (5)  # test suite structure
+├── organization/   (6)  # test suite structure
 ├── absinthe/       (5)  # Absinthe GraphQL
 ├── broadway/       (4)  # Broadway pipelines
 └── telemetry/      (5)  # Telemetry events
@@ -106,7 +194,7 @@ from a bare Elixir install via `Mix.install/1`.
 
 ## How the corpus stays honest
 
-**Every rule is executable.** `mix check_rules` runs all 170 example scripts
+**Every rule is executable.** `mix check_rules` runs all 176 example scripts
 on every push. A regression against a new Elixir release, a dependency bump,
 or an OTP change breaks the build.
 
@@ -164,7 +252,7 @@ mix check_rules                          # run every good/bad example
 mix check_rules core                     # one category
 mix check_rules core/start-supervised    # one rule
 mix generate_toc                         # regenerate the catalog
-mix test                                 # tests for the mix tasks themselves
+mix test                                 # mix tasks and Credo checks
 ```
 
 `make all` runs validate → test → generate → check in sequence.

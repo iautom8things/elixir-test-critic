@@ -2,7 +2,7 @@ defmodule TestCritic.RuleParser do
   @moduledoc false
 
   @required_fields ~w(id title category severity summary principles applies_when)
-  @optional_fields ~w(does_not_apply_when tags related_rules sources conflicts_with status)
+  @optional_fields ~w(does_not_apply_when tags related_rules sources conflicts_with status enforced_by)
   @valid_severities ~w(critical warning recommendation style)
   @valid_statuses ~w(active draft deprecated)
 

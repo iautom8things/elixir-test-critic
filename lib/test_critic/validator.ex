@@ -63,6 +63,32 @@ defmodule TestCritic.Validator do
     errors
   end
 
+  defp validate_enforcement(frontmatter, label) do
+    case Map.fetch(frontmatter, "enforced_by") do
+      :error ->
+        []
+
+      {:ok, "credo:TestCritic.Credo.Check." <> name} ->
+        if credo_check?(name) do
+          []
+        else
+          [format_error(label, "enforced_by references an unknown Credo check: #{name}")]
+        end
+
+      {:ok, _value} ->
+        [format_error(label, "enforced_by must use credo:TestCritic.Credo.Check.<Module>")]
+    end
+  end
+
+  defp credo_check?(name) do
+    full_name = "Elixir.TestCritic.Credo.Check." <> name
+
+    Enum.any?(Application.spec(:test_critic, :modules) || [], fn module ->
+      Atom.to_string(module) == full_name and Code.ensure_loaded?(module) and
+        Credo.Check in List.wrap(module.module_info(:attributes)[:behaviour])
+    end)
+  end
+
   defp validate_directory_contents(dir, label) do
     dir
     |> File.ls!()
@@ -85,10 +111,20 @@ defmodule TestCritic.Validator do
         []
 
       [_, value] ->
-        [format_error(label, "bad_test.exs has invalid EXPECTED value: #{value} (must be one of: #{Enum.join(@valid_expected, ", ")})")]
+        [
+          format_error(
+            label,
+            "bad_test.exs has invalid EXPECTED value: #{value} (must be one of: #{Enum.join(@valid_expected, ", ")})"
+          )
+        ]
 
       nil ->
-        [format_error(label, "bad_test.exs exists but missing or invalid # EXPECTED: comment on first line")]
+        [
+          format_error(
+            label,
+            "bad_test.exs exists but missing or invalid # EXPECTED: comment on first line"
+          )
+        ]
     end
   end
 
@@ -108,9 +144,20 @@ defmodule TestCritic.Validator do
     # Category match
     errors =
       case Map.get(fm, "category") do
-        ^expected_category -> errors
-        nil -> errors
-        other -> [format_error(label, "category '#{other}' does not match directory '#{expected_category}'") | errors]
+        ^expected_category ->
+          errors
+
+        nil ->
+          errors
+
+        other ->
+          [
+            format_error(
+              label,
+              "category '#{other}' does not match directory '#{expected_category}'"
+            )
+            | errors
+          ]
       end
 
     # Severity validity
@@ -118,8 +165,13 @@ defmodule TestCritic.Validator do
 
     errors =
       case Map.get(fm, "severity") do
-        nil -> errors
-        sev -> if sev in valid_severities, do: errors, else: [format_error(label, "invalid severity: #{sev}") | errors]
+        nil ->
+          errors
+
+        sev ->
+          if sev in valid_severities,
+            do: errors,
+            else: [format_error(label, "invalid severity: #{sev}") | errors]
       end
 
     # Critical severity requires does_not_apply_when
@@ -152,11 +204,16 @@ defmodule TestCritic.Validator do
 
     errors =
       case Map.get(fm, "status") do
-        nil -> errors
-        status -> if status in valid_statuses, do: errors, else: [format_error(label, "invalid status: #{status}") | errors]
+        nil ->
+          errors
+
+        status ->
+          if status in valid_statuses,
+            do: errors,
+            else: [format_error(label, "invalid status: #{status}") | errors]
       end
 
-    errors
+    validate_enforcement(fm, label) ++ errors
   end
 
   defp validate_cross_rule(rules, _rules_dir) do
@@ -204,7 +261,10 @@ defmodule TestCritic.Validator do
               if id in back_refs do
                 inner_acc
               else
-                ["#{id} lists #{ref} in related_rules but #{ref} does not list #{id} back" | inner_acc]
+                [
+                  "#{id} lists #{ref} in related_rules but #{ref} does not list #{id} back"
+                  | inner_acc
+                ]
               end
           end
         end)
@@ -220,7 +280,10 @@ defmodule TestCritic.Validator do
           if ref in all_ids do
             inner_acc
           else
-            [format_error(label, "conflicts_with references non-existent rule: #{ref}") | inner_acc]
+            [
+              format_error(label, "conflicts_with references non-existent rule: #{ref}")
+              | inner_acc
+            ]
           end
         end)
       end)

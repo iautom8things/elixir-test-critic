@@ -17,6 +17,34 @@ defmodule TestCritic.ValidatorTest do
       assert :ok = Validator.validate_all(@fixture_dir)
     end
 
+    test "accepts an existing Credo check as enforced_by" do
+      write_rule!("core", "test-rule",
+        id: "ETC-CORE-001",
+        enforced_by: "credo:TestCritic.Credo.Check.ProcessSleepInTest"
+      )
+
+      assert :ok = Validator.validate_all(@fixture_dir)
+    end
+
+    test "rejects unknown Credo checks" do
+      write_rule!("core", "test-rule",
+        id: "ETC-CORE-001",
+        enforced_by: "credo:TestCritic.Credo.Check.DoesNotExist"
+      )
+
+      assert {:error,
+              ["core/test-rule: enforced_by references an unknown Credo check: DoesNotExist"]} =
+               Validator.validate_all(@fixture_dir)
+    end
+
+    test "rejects other enforced_by formats" do
+      write_rule!("core", "test-rule", id: "ETC-CORE-001", enforced_by: "credo:OtherCheck")
+
+      assert {:error,
+              ["core/test-rule: enforced_by must use credo:TestCritic.Credo.Check.<Module>"]} =
+               Validator.validate_all(@fixture_dir)
+    end
+
     test "catches missing good_test.exs" do
       rule_dir = Path.join([@fixture_dir, "core", "test-rule"])
       File.mkdir_p!(rule_dir)
@@ -88,7 +116,11 @@ defmodule TestCritic.ValidatorTest do
       File.write!(Path.join(rule_dir, "good_test.exs"), "# good")
 
       assert {:error, errors} = Validator.validate_all(@fixture_dir)
-      assert Enum.any?(errors, &String.contains?(&1, "category 'otp' does not match directory 'core'"))
+
+      assert Enum.any?(
+               errors,
+               &String.contains?(&1, "category 'otp' does not match directory 'core'")
+             )
     end
 
     test "catches critical severity without does_not_apply_when" do
@@ -155,7 +187,11 @@ defmodule TestCritic.ValidatorTest do
       write_rule!("core", "rule-a", id: "ETC-CORE-001", conflicts_with: ["ETC-CORE-999"])
 
       assert {:error, errors} = Validator.validate_all(@fixture_dir)
-      assert Enum.any?(errors, &String.contains?(&1, "conflicts_with references non-existent rule: ETC-CORE-999"))
+
+      assert Enum.any?(
+               errors,
+               &String.contains?(&1, "conflicts_with references non-existent rule: ETC-CORE-999")
+             )
     end
   end
 
@@ -166,6 +202,8 @@ defmodule TestCritic.ValidatorTest do
     id = Keyword.fetch!(opts, :id)
     related = Keyword.get(opts, :related_rules, [])
     conflicts = Keyword.get(opts, :conflicts_with, [])
+    enforcement = Keyword.get(opts, :enforced_by)
+    enforcement_yaml = if enforcement, do: "enforced_by: #{enforcement}\n", else: ""
 
     related_yaml =
       case related do
@@ -190,7 +228,7 @@ defmodule TestCritic.ValidatorTest do
       - async-default
     applies_when:
       - "always"
-    #{related_yaml}#{conflicts_yaml}---
+    #{related_yaml}#{conflicts_yaml}#{enforcement_yaml}---
 
     # #{slug}
     """)
