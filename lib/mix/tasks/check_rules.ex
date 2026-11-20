@@ -35,7 +35,9 @@ defmodule Mix.Tasks.CheckRules do
     passed = Enum.count(results, &(&1 == :pass))
     failed = Enum.count(results, &(&1 == :fail))
 
-    Mix.shell().info("\nResults: #{length(results)} rules checked, #{passed} passed, #{failed} failed")
+    Mix.shell().info(
+      "\nResults: #{length(results)} rules checked, #{passed} passed, #{failed} failed"
+    )
 
     if failed > 0, do: Mix.raise("#{failed} rule(s) failed")
   end
@@ -64,8 +66,7 @@ defmodule Mix.Tasks.CheckRules do
     file = Path.basename(path)
 
     {output, exit_code} =
-      System.cmd("elixir", [Path.basename(path)],
-        cd: Path.dirname(path),
+      System.cmd("elixir", [path],
         stderr_to_stdout: true,
         env: [{"MIX_QUIET", "1"}]
       )

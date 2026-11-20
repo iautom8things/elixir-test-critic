@@ -7,7 +7,7 @@ defmodule Mix.Tasks.GenerateToc do
   def run(_args) do
     Mix.Task.run("app.start")
 
-    {:ok, path} = TestCritic.TocGenerator.generate("rules", "templates/toc_template.md.eex", "toc/RULES_REFERENCE.md")
+    {:ok, path} = TestCritic.TocGenerator.generate()
     Mix.shell().info("Generated #{path}")
   end
 end
