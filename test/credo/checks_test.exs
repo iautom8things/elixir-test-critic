@@ -53,7 +53,7 @@ defmodule TestCritic.Credo.ChecksTest do
 
       for {source, check} <- [
             {"assert_receive :ready, 10", Check.ShortReceiveTimeout},
-            {"Process.sleep(10)", Check.ProcessSleepInTest},
+            {"test \"waits\", do: Process.sleep(10)", Check.ProcessSleepInTest},
             {"assert true", Check.TrivialAssertion},
             {"Widget.start_link(name: Widget)", Check.NamedProcessOutsideSupervision}
           ] do
@@ -337,7 +337,7 @@ defmodule TestCritic.Credo.ChecksTest do
 
   test "sleep reports both spellings under test paths and honors exclusions" do
     check = Check.ProcessSleepInTest
-    source = "Process.sleep(10)\n10 |> :timer.sleep()"
+    source = "test \"waits\" do\nProcess.sleep(10)\n10 |> :timer.sleep()\nend"
     support = "test/support/stub.ex"
 
     for path <- [@test_file, "test/supporting/stub_test.exs"] do
@@ -345,7 +345,7 @@ defmodule TestCritic.Credo.ChecksTest do
       |> run(check, path)
       |> assert_issues(2)
       |> assert_issue_matches(%{
-        line_no: 1,
+        line_no: 2,
         message: ~r/poll with a deadline.*include the reason/
       })
     end
@@ -363,10 +363,85 @@ defmodule TestCritic.Credo.ChecksTest do
     refute_issues(run(source, check, "lib/widget.ex"))
   end
 
-  test "sleep permits a deliberate indefinite block" do
-    "spawn(fn -> Process.sleep(:infinity) end)\n:infinity |> :timer.sleep()"
-    |> run(Check.ProcessSleepInTest)
-    |> refute_issues()
+  test "both sleep scopes flag statements in test and setup bodies and inline branches" do
+    source = """
+    setup_all do
+      Process.sleep(10)
+    end
+    setup context do
+      alias Process, as: Worker
+      Worker.sleep(10)
+      context
+    end
+    describe "widget" do
+      test "waits" do
+        Process.sleep(10)
+        if ready?() do
+          case state() do
+            :ready -> :timer.sleep(10)
+          end
+        else
+          (10 |> :timer.sleep(); :ok)
+        end
+        with :ready <- state() do
+          for _ <- 1..2, do: Process.sleep(10)
+        else
+          :pending -> Process.sleep(10)
+        end
+      end
+    end
+    """
+
+    expected = Enum.map([2, 6, 11, 14, 17, 20, 22], &%{line_no: &1})
+
+    for params <- [[], [scope: :all]] do
+      source
+      |> run(Check.ProcessSleepInTest, @test_file, params)
+      |> assert_issues_match(expected)
+    end
+  end
+
+  test "only all scope reports finite sleeps in helpers, callbacks and nested arguments" do
+    source = """
+    Process.sleep(10)
+    def helper, do: Process.sleep(10)
+    defp wait, do: :timer.sleep(10)
+    test "runs callbacks" do
+      fn -> Process.sleep(10) end
+      &Process.sleep(&1)
+      &Process.sleep/1
+      spawn(fn -> Process.sleep(10) end)
+      Task.async(fn -> Process.sleep(10) end)
+      Task.start(fn -> Process.sleep(10) end)
+      start_supervised({Task, fn -> Process.sleep(10) end})
+      Mock.expect(fn -> Process.sleep(10) end)
+      assert :ok == Process.sleep(10)
+      if Process.sleep(10), do: :ok
+      [Process.sleep(10)]
+    end
+    """
+
+    refute_issues(run(source, Check.ProcessSleepInTest))
+
+    source
+    |> run(Check.ProcessSleepInTest, @test_file, scope: :all)
+    |> assert_issues_match(
+      Enum.map([1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15], &%{line_no: &1})
+    )
+  end
+
+  test "both sleep scopes allow a deliberate indefinite block" do
+    for mode <- [:test_flow, :all] do
+      """
+      test "waits" do
+        Process.sleep(:infinity)
+        spawn(fn -> Process.sleep(:infinity) end)
+        :infinity |> :timer.sleep()
+      end
+      """
+      |> run(Check.ProcessSleepInTest, @test_file, scope: mode)
+      |> refute_issues()
+    end
   end
 
   test "trivial assertions include comparisons of literals and identical AST" do
@@ -380,6 +455,11 @@ defmodule TestCritic.Credo.ChecksTest do
     """
     |> run(Check.TrivialAssertion)
     |> assert_issues(6)
+    |> assert_issue_matches(%{
+      line_no: 1,
+      message:
+        ~r/Assert the real condition.*skip when a prerequisite is missing.*delete the branch/
+    })
 
     """
     assert result.total == 42
@@ -450,7 +530,8 @@ defmodule TestCritic.Credo.ChecksTest do
       {Check.ShortReceiveTimeout, @test_file, "", "assert_receive :ready, 10", "", []},
       {Check.ShortReceiveTimeout, "test/test_helper.exs", "", "ExUnit.start()", "",
        [require_configured_default: true]},
-      {Check.ProcessSleepInTest, @test_file, "", "Process.sleep(10)", "", []},
+      {Check.ProcessSleepInTest, @test_file, "test \"waits\" do\n", "Process.sleep(10)", "end\n",
+       []},
       {Check.TrivialAssertion, @test_file, "", "assert true", "", []},
       {Check.NamedProcessOutsideSupervision, @test_file, "", "Widget.start_link(name: Widget)",
        "", []}

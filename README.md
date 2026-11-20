@@ -113,7 +113,7 @@ umbrella apps and files scanned by absolute path.
 | `AsyncGlobalState` | [ETC-ISO-001](rules/isolation/no-app-put-env-async/RULE.md), [ETC-ISO-003](rules/isolation/no-shared-ets-async/RULE.md) | None |
 | `UnverifiedMoxExpect` | [ETC-MOCK-004](rules/mocking/verify-on-exit/RULE.md) | `verifying_case_templates: []`. List modules whose setup verifies Mox for every test, such as `[MyApp.DataCase]`. |
 | `ShortReceiveTimeout` | [ETC-CORE-012](rules/core/receive-timeout-budget/RULE.md) | `min_timeout: 500` ms. `macros: [:assert_receive, :assert_push, :assert_reply, :assert_broadcast, :assert_redirect, :assert_patch, :render_async]`. Custom names take the timeout as their last argument. Set `require_configured_default: true` to require `assert_receive_timeout` in `test/test_helper.exs`. |
-| `ProcessSleepInTest` | [ETC-CORE-005](rules/core/no-process-sleep/RULE.md) | `excluded_paths: ["test/support"]`. Set `[]` to include support code. Paths are relative to each Mix project. |
+| `ProcessSleepInTest` | [ETC-CORE-005](rules/core/no-process-sleep/RULE.md) | `scope: :test_flow` checks finite sleep statements in tests and setup blocks, including inline branches. Use `scope: :all` to include helpers and callbacks. `excluded_paths: ["test/support"]` is relative to each Mix project. Set it to `[]` to include support code. |
 | `TrivialAssertion` | [ETC-CORE-013](rules/core/assert-observable-results/RULE.md) | None |
 | `NamedProcessOutsideSupervision` | [ETC-CORE-006](rules/core/start-supervised/RULE.md) | None |
 

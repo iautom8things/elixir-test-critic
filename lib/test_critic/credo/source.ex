@@ -77,6 +77,19 @@ defmodule TestCritic.Credo.Source do
     acc
   end
 
+  def reduce_statements(body, scope, acc, visit) do
+    {_scope, acc} =
+      Enum.reduce(expressions(body), {scope, acc}, fn
+        {_, meta, _} = statement, {scope, acc} when is_list(meta) ->
+          walk(statement, scope, acc, fn node, scope, acc -> {:skip, visit.(node, scope, acc)} end)
+
+        _literal, state ->
+          state
+      end)
+
+    acc
+  end
+
   def module_name({:__aliases__, _, [:"Elixir" | parts]}, _scope), do: parts
 
   def module_name({:__aliases__, _, [first | rest]}, scope) when is_atom(first) do

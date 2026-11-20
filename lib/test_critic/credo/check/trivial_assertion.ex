@@ -32,7 +32,7 @@ defmodule TestCritic.Credo.Check.TrivialAssertion do
          true <- trivial?(name, expression) do
       issue =
         format_issue(issue_meta,
-          message: "Assert an observable result from the code under test.",
+          message: message(name, expression),
           trigger: Atom.to_string(name),
           line_no: meta[:line],
           column: meta[:column]
@@ -43,6 +43,12 @@ defmodule TestCritic.Credo.Check.TrivialAssertion do
       _ -> issues
     end
   end
+
+  defp message(:assert, true) do
+    "Assert the real condition, tag the test to skip when a prerequisite is missing, or delete the branch."
+  end
+
+  defp message(_name, _expression), do: "Assert an observable result from the code under test."
 
   defp trivial?(:assert, true), do: true
   defp trivial?(:assert, {:is_atom, _, [{:__aliases__, _, _}]}), do: true

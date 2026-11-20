@@ -48,6 +48,11 @@ asynchronous operation by guessing a duration rather than receiving confirmation
 - `Process.sleep` followed by `assert_received`
 - Comments like `# wait for the GenServer to process` above a sleep
 
+Credo's default `scope: :test_flow` flags finite sleep statements in `test`,
+`setup`, and `setup_all` bodies, including inline branches. Use `scope: :all`
+to check helper functions and callbacks as well. Both scopes allow a literal
+`:infinity`.
+
 ## Bad
 
 ```elixir
