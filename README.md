@@ -55,40 +55,39 @@ for the condensed catalog, or browse [`rules/`][rules] directly.
 
 ## Credo checks
 
-Add Test Critic next to your Credo dependency in `mix.exs`. Mix compiles the
-checks as part of the dependency.
+Add Test Critic next to your Credo dependency in `mix.exs`. Keep your existing
+Credo declaration if it resolves to 1.7.x. Replace `<reviewed-commit-sha>` with
+the commit you reviewed so updates to the lint gate are deliberate.
 
 ```elixir
 defp deps do
   [
-    {:credo, "~> 1.7.0", only: [:dev, :test], runtime: false},
-    {:test_critic, github: "iautom8things/elixir-test-critic", only: [:dev, :test], runtime: false}
+    {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+    {:test_critic,
+     github: "iautom8things/elixir-test-critic",
+     ref: "<reviewed-commit-sha>",
+     only: [:dev, :test],
+     runtime: false}
   ]
 end
 ```
 
-List the checks in `.credo.exs`. Use `checks.extra` to keep Credo's defaults.
-Include `config/` so the build-time config check sees those files.
+Use `checks.extra` for the test checks so Credo keeps its defaults. Credo 1.7
+uses each check's `files` option to filter the files in the current profile.
+The `build-config` profile applies that filter and enables just the build-time
+check, so the ordinary lint run keeps its existing file selection.
 
 ```elixir
 alias TestCritic.Credo.Check
+
+config_files = ["config/", "apps/*/config/"]
 
 %{
   configs: [
     %{
       name: "default",
-      files: %{
-        included: [
-          "config/**/*.exs",
-          "lib/**/*.{ex,exs}",
-          "test/**/*.{ex,exs}",
-          "apps/*/{config,lib,test}/**/*.{ex,exs}",
-          "mix.exs"
-        ]
-      },
       checks: %{
         extra: [
-          {Check.NondeterministicConfig, []},
           {Check.AsyncGlobalState, []},
           {Check.UnverifiedMoxExpect, []},
           {Check.ShortReceiveTimeout, []},
@@ -97,12 +96,20 @@ alias TestCritic.Credo.Check
           {Check.NamedProcessOutsideSupervision, []}
         ]
       }
+    },
+    %{
+      name: "build-config",
+      files: %{included: config_files},
+      checks: %{
+        enabled: [{Check.NondeterministicConfig, files: [included: config_files]}]
+      }
     }
   ]
 }
 ```
 
-Run `mix deps.get` and `mix credo`. All seven checks report high-priority
+Run `mix deps.get`, `mix credo`, and `mix credo --config-name build-config`.
+All seven checks report high-priority
 warnings and accept Credo's standard check options, including `priority` and
 `files`. Test-only checks recognize `*_test.exs` files under `test/`, including
 umbrella apps and files scanned by absolute path.
@@ -112,8 +119,8 @@ umbrella apps and files scanned by absolute path.
 | `NondeterministicConfig` | [ETC-ORG-006](rules/organization/deterministic-build-config/RULE.md) | None |
 | `AsyncGlobalState` | [ETC-ISO-001](rules/isolation/no-app-put-env-async/RULE.md), [ETC-ISO-003](rules/isolation/no-shared-ets-async/RULE.md) | None |
 | `UnverifiedMoxExpect` | [ETC-MOCK-004](rules/mocking/verify-on-exit/RULE.md) | `verifying_case_templates: []`. List modules whose setup verifies Mox for every test, such as `[MyApp.DataCase]`. |
-| `ShortReceiveTimeout` | [ETC-CORE-012](rules/core/receive-timeout-budget/RULE.md) | `min_timeout: 500` ms. `macros: [:assert_receive, :assert_push, :assert_reply, :assert_broadcast, :assert_redirect, :assert_patch, :render_async]`. Custom names take the timeout as their last argument. Set `require_configured_default: true` to require `assert_receive_timeout` in `test/test_helper.exs`. |
-| `ProcessSleepInTest` | [ETC-CORE-005](rules/core/no-process-sleep/RULE.md) | `scope: :test_flow` checks finite sleep statements in tests and setup blocks, including inline branches. Use `scope: :all` to include helpers and callbacks. `excluded_paths: ["test/support"]` is relative to each Mix project. Set it to `[]` to include support code. |
+| `ShortReceiveTimeout` | [ETC-CORE-012](rules/core/receive-timeout-budget/RULE.md) | `min_timeout: 500` ms. `macros: [:assert_receive, :assert_push, :assert_reply, :assert_broadcast, :assert_redirect, :assert_patch, :render_async]`. Custom names take the timeout as their last argument. The check requires `assert_receive_timeout` in `test/test_helper.exs` and checks literal values against the same minimum. Set `require_configured_default: false` to turn off that requirement. |
+| `ProcessSleepInTest` | [ETC-CORE-005](rules/core/no-process-sleep/RULE.md) | `scope: :test_flow` covers test flow and helpers that only sleep. Use `scope: :all` to include sleeps elsewhere. `excluded_paths: ["test/support"]` is relative to each Mix project. Set it to `[]` to include support code. |
 | `TrivialAssertion` | [ETC-CORE-013](rules/core/assert-observable-results/RULE.md) | None |
 | `NamedProcessOutsideSupervision` | [ETC-CORE-006](rules/core/start-supervised/RULE.md) | None |
 
@@ -129,6 +136,10 @@ Process.sleep(50)
 These checks inspect one file at a time. Use the [prose rules][toc] to review
 which process sends a message, what a helper in another file does, and what
 depends on runtime state.
+
+The timeout check accepts a computed value passed as `assert_receive_timeout:`.
+If you build the entire options list dynamically, set the timeout in a
+separate `ExUnit.configure/1` call so Credo can see the key.
 
 ## What a review looks like
 

@@ -2,6 +2,7 @@ defmodule TestCritic.Credo.RuleExamplesTest do
   use Credo.Test.Case
 
   alias TestCritic.Credo.Check
+  alias TestCritic.RuleParser
 
   setup_all do
     {:ok, _} = Application.ensure_all_started(:credo)
@@ -9,16 +10,17 @@ defmodule TestCritic.Credo.RuleExamplesTest do
   end
 
   test "each check agrees with its linked runnable examples" do
-    for {check, rule} <- [
-          {Check.NondeterministicConfig, "organization/deterministic-build-config"},
-          {Check.AsyncGlobalState, "isolation/no-app-put-env-async"},
-          {Check.AsyncGlobalState, "isolation/no-shared-ets-async"},
-          {Check.UnverifiedMoxExpect, "mocking/verify-on-exit"},
-          {Check.ShortReceiveTimeout, "core/receive-timeout-budget"},
-          {Check.ProcessSleepInTest, "core/no-process-sleep"},
-          {Check.TrivialAssertion, "core/assert-observable-results"},
-          {Check.NamedProcessOutsideSupervision, "core/start-supervised"}
-        ] do
+    modules =
+      :test_critic
+      |> Application.spec(:modules)
+      |> Map.new(&{"credo:" <> inspect(&1), &1})
+
+    for %{path: path, category: category, slug: slug} <- RuleParser.discover_rules("rules"),
+        {:ok, rule} = RuleParser.parse_file(path),
+        enforcement = rule.frontmatter["enforced_by"],
+        enforcement do
+      check = Map.fetch!(modules, enforcement)
+      rule = Path.join(category, slug)
       bad_issues = rule |> example("bad", check) |> run_check(check)
       assert bad_issues != [], "expected #{inspect(check)} to report #{rule}/bad_test.exs"
       rule |> example("good", check) |> run_check(check) |> refute_issues()

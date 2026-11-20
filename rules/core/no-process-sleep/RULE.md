@@ -49,9 +49,10 @@ asynchronous operation by guessing a duration rather than receiving confirmation
 - Comments like `# wait for the GenServer to process` above a sleep
 
 Credo's default `scope: :test_flow` flags finite sleep statements in `test`,
-`setup`, and `setup_all` bodies, including inline branches. Use `scope: :all`
-to check helper functions and callbacks as well. Both scopes allow a literal
-`:infinity`.
+`feature`, `property`, `setup`, and `setup_all` bodies, including inline
+branches. It also flags a helper whose only work is sleeping. A `receive`
+with only an `after` clause counts as a sleep. Use `scope: :all` to check sleeps
+in other helpers and callbacks. Both scopes allow a literal `:infinity`.
 
 ## Bad
 

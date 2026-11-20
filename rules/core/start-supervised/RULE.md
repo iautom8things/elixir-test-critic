@@ -66,10 +66,9 @@ one that created the problem.
 
 ```elixir
 setup do
-  {:ok, pid} = MyCache.start_link([])
-  %{cache: pid}
-  # Dies only after the test process exits. Nothing waits for it, so the next
-  # test can start while it is still running.
+  # Wrong: bare start_link. Nothing stops this before the next test starts.
+  {:ok, pid} = StartSupervisedBadAgent.start_link(name: __MODULE__)
+  %{agent: pid}
 end
 ```
 
