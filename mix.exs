@@ -18,7 +18,7 @@ defmodule Shampoo.MixProject do
       docs: [
         main: "readme",
         extras: ["README.md"],
-        logo: "assets/suds.svg",
+        logo: "assets/suds-mark.svg",
         assets: %{"assets" => "assets"},
         source_ref: "v#{@version}"
       ],
@@ -39,7 +39,7 @@ defmodule Shampoo.MixProject do
       licenses: ["MIT"],
       maintainers: ["iautom8things"],
       links: %{"GitHub" => @source_url},
-      files: ~w(lib/shampoo/check assets/suds.svg mix.exs README.md LICENSE)
+      files: ~w(lib/shampoo/check assets/suds.svg assets/suds-mark.svg mix.exs README.md LICENSE)
     ]
   end
 
