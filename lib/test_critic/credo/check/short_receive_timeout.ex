@@ -33,15 +33,10 @@ defmodule TestCritic.Credo.Check.ShortReceiveTimeout do
 
   @impl Credo.Check
   def run(source_file, params) do
-    case Source.path_parts(source_file) do
-      ["test", "test_helper.exs"] ->
-        helper_issues(source_file, params) ++ issues(source_file, params)
-
-      ["test" | _] ->
-        issues(source_file, params)
-
-      _ ->
-        []
+    cond do
+      Source.test_helper?(source_file) -> helper_issues(source_file, params)
+      Source.test_file?(source_file) -> issues(source_file, params)
+      true -> []
     end
   end
 

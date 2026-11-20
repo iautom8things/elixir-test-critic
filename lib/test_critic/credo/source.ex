@@ -3,16 +3,67 @@ defmodule TestCritic.Credo.Source do
 
   alias Credo.SourceFile
 
-  def path_parts(%SourceFile{filename: filename}) do
-    filename
-    |> Path.relative_to_cwd()
-    |> Path.split()
-    |> project_path()
+  def test_file?(%SourceFile{filename: filename}) do
+    String.ends_with?(Path.basename(filename), "_test.exs") and
+      "test" in path_parts(Path.dirname(filename))
   end
 
-  defp project_path(["." | rest]), do: project_path(rest)
-  defp project_path(["apps", _app | rest]), do: rest
-  defp project_path(parts), do: parts
+  def test_helper?(%SourceFile{filename: filename}) do
+    match?(["test_helper.exs", "test" | _], filename |> path_parts() |> Enum.reverse())
+  end
+
+  def test_support_file?(source), do: test_path_matches?(source, "test/support")
+
+  def test_path_matches?(%SourceFile{filename: filename}, path) do
+    parts = path_parts(filename)
+    prefix = path_parts(path)
+
+    List.starts_with?(parts, prefix) or test_subpath_matches?(parts, prefix)
+  end
+
+  defp test_subpath_matches?(["test" | rest] = parts, prefix),
+    do: List.starts_with?(parts, prefix) or test_subpath_matches?(rest, prefix)
+
+  defp test_subpath_matches?([_ | rest], prefix), do: test_subpath_matches?(rest, prefix)
+  defp test_subpath_matches?([], _prefix), do: false
+
+  def build_config_file?(%SourceFile{filename: filename}) do
+    case filename |> path_parts() |> Enum.reverse() do
+      [name, "config" | project] when name != "runtime.exs" ->
+        Path.extname(name) == ".exs" and config_project_root?(project)
+
+      _ ->
+        false
+    end
+  end
+
+  defp config_project_root?([]), do: true
+  defp config_project_root?([_app, "apps"]), do: true
+
+  defp config_project_root?(reversed) do
+    reversed |> Enum.reverse() |> Path.join() |> Path.expand() |> valid_config_root?()
+  end
+
+  defp valid_config_root?(path) do
+    case enclosing_project(path) do
+      nil -> true
+      ^path -> true
+      root -> match?(["apps", _app], path |> Path.relative_to(root) |> Path.split())
+    end
+  end
+
+  defp enclosing_project(path) do
+    parent = Path.dirname(path)
+
+    cond do
+      File.regular?(Path.join(path, "mix.exs")) -> path
+      parent == path -> nil
+      true -> enclosing_project(parent)
+    end
+  end
+
+  defp path_parts(path),
+    do: path |> Path.relative_to_cwd() |> Path.split() |> Enum.reject(&(&1 == "."))
 
   def expressions({:__block__, _, expressions}), do: expressions
   def expressions(expression), do: [expression]

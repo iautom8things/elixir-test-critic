@@ -6,6 +6,7 @@ defmodule TestCritic.Credo.ChecksTest do
   alias TestCritic.Credo.Check
 
   @test_file "test/widget_test.exs"
+  @project_prefixes ["", "./", "apps/widgets/", "/elsewhere/widgets/", "/elsewhere/apps/widgets/"]
 
   setup_all do
     {:ok, _} = Application.ensure_all_started(:credo)
@@ -41,6 +42,38 @@ defmodule TestCritic.Credo.ChecksTest do
           "config/dev.ex"
         ] do
       refute_issues(run("System.os_time()", Check.NondeterministicConfig, path))
+    end
+  end
+
+  test "path-scoped checks accept absolute, dotted and umbrella paths" do
+    for prefix <- @project_prefixes do
+      assert_issue(
+        run("System.os_time()", Check.NondeterministicConfig, prefix <> "config/test.exs")
+      )
+
+      for {source, check} <- [
+            {"assert_receive :ready, 10", Check.ShortReceiveTimeout},
+            {"Process.sleep(10)", Check.ProcessSleepInTest},
+            {"assert true", Check.TrivialAssertion},
+            {"Widget.start_link(name: Widget)", Check.NamedProcessOutsideSupervision}
+          ] do
+        assert_issue(run(source, check, prefix <> @test_file))
+        refute_issues(run(source, check, prefix <> "test/widget.exs"))
+        refute_issues(run(source, check, prefix <> "testish/widget_test.exs"))
+      end
+    end
+  end
+
+  @tag :tmp_dir
+  test "absolute config paths respect the closest Mix project", %{tmp_dir: root} do
+    File.write!(Path.join(root, "mix.exs"), "")
+
+    for path <- ["config/test.exs", "apps/widgets/config/test.exs"] do
+      assert_issue(run("System.os_time()", Check.NondeterministicConfig, Path.join(root, path)))
+    end
+
+    for path <- ["lib/config/test.exs", "config/nested/test.exs", "config/runtime.exs"] do
+      refute_issues(run("System.os_time()", Check.NondeterministicConfig, Path.join(root, path)))
     end
   end
 
@@ -237,9 +270,11 @@ defmodule TestCritic.Credo.ChecksTest do
 
     refute_issues(run("ExUnit.start()", check, helper))
 
-    "ExUnit.start()"
-    |> run(check, helper, opts)
-    |> assert_issue(%{line_no: 1, trigger: "start", message: ~r/assert_receive_timeout/})
+    for prefix <- @project_prefixes do
+      "ExUnit.start()"
+      |> run(check, prefix <> helper, opts)
+      |> assert_issue(%{line_no: 1, trigger: "start", message: ~r/assert_receive_timeout/})
+    end
 
     for source <- [
           "ExUnit.start(assert_receive_timeout: 1_000)",
@@ -254,7 +289,7 @@ defmodule TestCritic.Credo.ChecksTest do
     source = "Process.sleep(10)\n10 |> :timer.sleep()"
     support = "test/support/stub.ex"
 
-    for path <- [@test_file, "apps/widgets/test/widget_test.exs", "test/supporting/stub.exs"] do
+    for path <- [@test_file, "test/supporting/stub_test.exs"] do
       source
       |> run(check, path)
       |> assert_issues(2)
@@ -264,10 +299,17 @@ defmodule TestCritic.Credo.ChecksTest do
       })
     end
 
-    refute_issues(run(source, check, support))
+    for prefix <- @project_prefixes do
+      refute_issues(run(source, check, prefix <> support))
+      refute_issues(run(source, check, prefix <> "test/support/stub_test.exs"))
+      assert_issues(run(source, check, prefix <> support, excluded_paths: []), 2)
+
+      refute_issues(
+        run(source, check, prefix <> @test_file, excluded_paths: ["./" <> @test_file])
+      )
+    end
+
     refute_issues(run(source, check, "lib/widget.ex"))
-    assert_issues(run(source, check, support, excluded_paths: []), 2)
-    refute_issues(run(source, check, @test_file, excluded_paths: [@test_file]))
   end
 
   test "trivial assertions include comparisons of literals and identical AST" do

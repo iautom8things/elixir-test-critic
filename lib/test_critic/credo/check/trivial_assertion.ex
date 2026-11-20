@@ -16,10 +16,7 @@ defmodule TestCritic.Credo.Check.TrivialAssertion do
 
   @impl Credo.Check
   def run(source_file, params) do
-    case Source.path_parts(source_file) do
-      ["test" | _] -> issues(source_file, params)
-      _ -> []
-    end
+    if Source.test_file?(source_file), do: issues(source_file, params), else: []
   end
 
   defp issues(source_file, params) do

@@ -15,10 +15,9 @@ defmodule TestCritic.Credo.Check.ProcessSleepInTest do
 
   @impl Credo.Check
   def run(source_file, params) do
-    parts = Source.path_parts(source_file)
     excluded_paths = Params.get(params, :excluded_paths, __MODULE__)
 
-    if match?(["test" | _], parts) and not excluded?(parts, excluded_paths) do
+    if test_source?(source_file) and not excluded?(source_file, excluded_paths) do
       issue_meta = IssueMeta.for(source_file, params)
       Source.reduce(source_file, [], &find_sleep(&1, &2, &3, issue_meta))
     else
@@ -46,7 +45,7 @@ defmodule TestCritic.Credo.Check.ProcessSleepInTest do
     end
   end
 
-  defp excluded?(parts, paths) do
-    Enum.any?(paths, fn path -> List.starts_with?(parts, Path.split(path)) end)
-  end
+  defp test_source?(source), do: Source.test_file?(source) or Source.test_support_file?(source)
+
+  defp excluded?(source, paths), do: Enum.any?(paths, &Source.test_path_matches?(source, &1))
 end

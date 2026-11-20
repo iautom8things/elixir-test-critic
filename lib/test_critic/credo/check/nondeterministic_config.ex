@@ -25,13 +25,7 @@ defmodule TestCritic.Credo.Check.NondeterministicConfig do
 
   @impl Credo.Check
   def run(source_file, params) do
-    case Source.path_parts(source_file) do
-      ["config", filename] when filename != "runtime.exs" ->
-        if Path.extname(filename) == ".exs", do: issues(source_file, params), else: []
-
-      _ ->
-        []
-    end
+    if Source.build_config_file?(source_file), do: issues(source_file, params), else: []
   end
 
   defp issues(source_file, params) do
