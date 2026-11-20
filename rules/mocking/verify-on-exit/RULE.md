@@ -16,6 +16,7 @@ does_not_apply_when:
   - "Using Mox.stub/3 where you explicitly don't want call count verification"
 related_rules:
   - ETC-MOCK-010
+enforced_by: credo:TestCritic.Credo.Check.UnverifiedMoxExpect
 ---
 
 # Always verify mock expectations

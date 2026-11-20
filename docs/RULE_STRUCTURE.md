@@ -58,6 +58,7 @@ for the canonical template.
 | `sources` | list | URLs or references backing the rule |
 | `conflicts_with` | list | Rule IDs this one contradicts |
 | `status` | enum | Defaults to `active` |
+| `enforced_by` | string | `credo:TestCritic.Credo.Check.<Module>` for a check that implements a static part of the rule |
 
 ## RULE.md Body
 

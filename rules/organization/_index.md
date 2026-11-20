@@ -16,6 +16,7 @@ structure and style of your test suite as a whole.
 | [ETC-ORG-003](dont-test-library-code/) | Don't test that libraries work | recommendation |
 | [ETC-ORG-004](minimize-setup-blocks/) | Minimize setup block scope | recommendation |
 | [ETC-ORG-005](tag-external-dependencies/) | Tag tests requiring external resources | recommendation |
+| [ETC-ORG-006](deterministic-build-config/) | Keep build-time configuration deterministic | warning |
 
 ## Guiding principles
 

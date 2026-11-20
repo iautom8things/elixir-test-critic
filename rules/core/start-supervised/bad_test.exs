@@ -1,8 +1,7 @@
 # EXPECTED: passes
-# BAD PRACTICE: Agent started with bare start_link, outside ExUnit's supervisor.
-# The agent dies only after the test process exits and nothing waits for it. In a
-# real suite with named processes, the next test can start first and crash with
-# {:already_started, pid}. This script passes because its agents are unnamed.
+# BAD PRACTICE: A named Agent starts outside ExUnit's supervisor.
+# ExUnit does not wait for the Agent to stop. A later test reusing the name
+# could fail with {:already_started, pid}. Only one test starts it here.
 Mix.install([])
 
 ExUnit.start(autorun: true)
@@ -10,8 +9,9 @@ ExUnit.start(autorun: true)
 defmodule StartSupervisedBadAgent do
   use Agent
 
-  def start_link(initial_value) do
-    Agent.start_link(fn -> initial_value end)
+  def start_link(opts) do
+    {initial, opts} = Keyword.pop(opts, :initial)
+    Agent.start_link(fn -> initial end, opts)
   end
 
   def get(pid), do: Agent.get(pid, & &1)
@@ -23,15 +23,12 @@ defmodule StartSupervisedBadTest do
 
   setup do
     # Wrong: bare start_link. Nothing stops this before the next test starts.
-    {:ok, pid} = StartSupervisedBadAgent.start_link(nil)
+    {:ok, pid} = StartSupervisedBadAgent.start_link(name: __MODULE__)
     %{agent: pid}
   end
 
-  test "agent starts with nil", %{agent: pid} do
+  test "agent starts with nil and stores a new value", %{agent: pid} do
     assert StartSupervisedBadAgent.get(pid) == nil
-  end
-
-  test "agent stores a value", %{agent: pid} do
     StartSupervisedBadAgent.put(pid, 42)
     assert StartSupervisedBadAgent.get(pid) == 42
   end

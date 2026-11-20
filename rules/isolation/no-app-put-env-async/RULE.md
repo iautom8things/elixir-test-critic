@@ -17,6 +17,7 @@ does_not_apply_when:
 related_rules:
   - ETC-MOCK-007
   - ETC-TELE-003
+enforced_by: credo:TestCritic.Credo.Check.AsyncGlobalState
 ---
 
 # Never use Application.put_env in async tests

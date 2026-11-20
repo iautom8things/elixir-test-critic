@@ -47,7 +47,8 @@ defmodule TestCritic.TocGenerator do
                   slug: slug,
                   category: cat,
                   applies_when: Map.get(fm, "applies_when", []),
-                  does_not_apply_when: Map.get(fm, "does_not_apply_when", [])
+                  does_not_apply_when: Map.get(fm, "does_not_apply_when", []),
+                  enforced_by: Map.get(fm, "enforced_by")
                 }
 
               _ ->

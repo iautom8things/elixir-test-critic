@@ -68,4 +68,14 @@ defmodule TestCritic.TocGeneratorTest do
     assert content =~ "Critical Rules"
     assert content =~ "Warning Rules"
   end
+
+  test "shows Credo enforcement next to the linked rule" do
+    rule_path = Path.join([@fixture_dir, "core", "test-rule", "RULE.md"])
+    [start, frontmatter, body] = String.split(File.read!(rule_path), "---", parts: 3)
+    check = "credo:TestCritic.Credo.Check.ProcessSleepInTest"
+    File.write!(rule_path, [start, "---", frontmatter, "enforced_by: ", check, "\n---", body])
+
+    assert {:ok, path} = TocGenerator.generate(@fixture_dir, @template_path, @output_path)
+    assert File.read!(path) =~ "| [ETC-CORE-001](../rules/core/test-rule/RULE.md) | `#{check}` |"
+  end
 end

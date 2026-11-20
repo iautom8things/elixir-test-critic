@@ -21,9 +21,11 @@
 
 ### Warning Rules (should fix)
 
+| `ETC-CORE-013` | [Assert observable results](../rules/core/assert-observable-results/RULE.md) | core |
 | `ETC-CORE-001` | [Use async: true by default](../rules/core/async-by-default/RULE.md) | core |
 | `ETC-CORE-008` | [Use pattern matching with capture_log in async tests](../rules/core/capture-log-async/RULE.md) | core |
 | `ETC-CORE-011` | [Keep setup work outside the deadline a test proves](../rules/core/deadline-excludes-setup/RULE.md) | core |
+| `ETC-CORE-012` | [Give cross-process assertions enough time](../rules/core/receive-timeout-budget/RULE.md) | core |
 | `ETC-ISO-005` | [on_exit runs in a separate process](../rules/isolation/on-exit-process-boundary/RULE.md) | isolation |
 | `ETC-ISO-004` | [Choose sandbox mode and ownership based on process needs](../rules/isolation/sandbox-ownership-strategy/RULE.md) | isolation |
 | `ETC-ISO-002` | [Generate unique values for constrained fields](../rules/isolation/unique-test-data/RULE.md) | isolation |
@@ -50,6 +52,7 @@
 | `ETC-LV-007` | [Assert stream content via DOM, not assigns](../rules/liveview/stream-dom-assertions/RULE.md) | liveview |
 | `ETC-PROP-004` | [Don't reimplement the system under test in properties](../rules/property/dont-reimplement-sut/RULE.md) | property |
 | `ETC-PROP-003` | [Prefer map over filter in generators](../rules/property/prefer-map-over-filter/RULE.md) | property |
+| `ETC-ORG-006` | [Keep build-time configuration deterministic](../rules/organization/deterministic-build-config/RULE.md) | organization |
 | `ETC-ORG-002` | [Test behavior, not interactions](../rules/organization/test-behaviour-not-interactions/RULE.md) | organization |
 | `ETC-TELE-003` | [Always detach telemetry handlers after tests](../rules/telemetry/detach-handlers/RULE.md) | telemetry |
 | `ETC-TELE-005` | [Filter telemetry events by origin in async tests](../rules/telemetry/filter-events-by-origin/RULE.md) | telemetry |
@@ -67,6 +70,7 @@ Rules in this category cover the foundational practices of writing ExUnit tests 
 
 | ID | Rule | Severity | Summary |
 |----|------|----------|---------|
+| `ETC-CORE-013` | [Assert observable results](../rules/core/assert-observable-results/RULE.md) | warning | Assert a result produced by the code under test so a change in behavior can make the test fail. |
 | `ETC-CORE-004` | [Use assert_receive for async, assert_received for sync](../rules/core/assert-receive-vs-received/RULE.md) | critical | Use `assert_receive/2` (with a timeout) when the message originates from an asynchronous operation. Use `assert_received/1` (no timeout, immediate check) only when you have already synchronised with the sender and the message is guaranteed to be in the mailbox. |
 | `ETC-CORE-001` | [Use async: true by default](../rules/core/async-by-default/RULE.md) | warning | Every ExUnit test case should use `async: true` unless it genuinely requires exclusive access to shared global state. Sequential tests are a code smell indicating leaked mutable state. |
 | `ETC-CORE-008` | [Use pattern matching with capture_log in async tests](../rules/core/capture-log-async/RULE.md) | warning | When asserting on log output in async tests, use `=~` (substring match) rather than `==` (exact match) with `capture_log`. Spawned processes within the test may emit logs after the capture window closes, making the exact string unpredictable. |
@@ -74,6 +78,7 @@ Rules in this category cover the foundational practices of writing ExUnit tests 
 | `ETC-CORE-002` | [One describe block per public function](../rules/core/describe-per-function/RULE.md) | style | Group tests for each public function inside a dedicated `describe` block named after that function. This makes it obvious which function is broken when tests fail and keeps the test module navigable as the module under test grows. |
 | `ETC-CORE-010` | [Limit doctests to pure functions](../rules/core/doctest-boundaries/RULE.md) | recommendation | Write doctests only for pure, deterministic functions. Doctests for functions with side effects (database writes, HTTP calls, process interactions) are fragile and hard to maintain: the example cannot show the setup it depends on, and its printed result drifts with the state it reads. |
 | `ETC-CORE-005` | [Never use Process.sleep for synchronization](../rules/core/no-process-sleep/RULE.md) | critical | Do not use `Process.sleep/1` to wait for asynchronous operations to complete. It creates timing-dependent tests that are flaky under load and arbitrarily slow on fast machines. Use `assert_receive`, `GenServer.call`, or process monitoring instead. |
+| `ETC-CORE-012` | [Give cross-process assertions enough time](../rules/core/receive-timeout-budget/RULE.md) | warning | Give cross-process assertions a deadline that tolerates a loaded runner. A successful receive returns as soon as the message arrives. |
 | `ETC-CORE-003` | [Compose setup with named functions, not nesting](../rules/core/setup-composition/RULE.md) | recommendation | Build test setup by composing named helper functions rather than nesting multiple `setup` blocks or duplicating setup logic. Named functions make setup readable, reusable, and independently testable. |
 | `ETC-CORE-006` | [Use start_supervised for process cleanup](../rules/core/start-supervised/RULE.md) | critical | Start processes in tests using `start_supervised!/2` so ExUnit stops them, in order, before the next test starts. A process started with a bare `start_link` only dies some time after the test process exits, and one started unlinked or under another supervisor does not die at all. |
 | `ETC-CORE-007` | [Name tests with precondition and outcome](../rules/core/test-naming/RULE.md) | style | Write test names that describe both the precondition (given) and the expected outcome (then), so a failing test name alone tells you what broke and why. Avoid vague names like "works" or "test 1". |
@@ -213,6 +218,7 @@ Rules for test file structure, readability, and style in Elixir projects.
 
 | ID | Rule | Severity | Summary |
 |----|------|----------|---------|
+| `ETC-ORG-006` | [Keep build-time configuration deterministic](../rules/organization/deterministic-build-config/RULE.md) | warning | Keep build-time config stable so Mix can reuse compiled code. Generate run-specific values at runtime. |
 | `ETC-ORG-003` | [Don't test that libraries work](../rules/organization/dont-test-library-code/RULE.md) | recommendation | Trust that Ecto, Phoenix, Plug, Jason, and other well-tested libraries work correctly. Test the logic your application adds on top of them. Writing tests that only exercise library behaviour gives you noise without signal and slows your suite. |
 | `ETC-ORG-004` | [Minimize setup block scope](../rules/organization/minimize-setup-blocks/RULE.md) | recommendation | Use a setup block only when the same preparation code is shared across three or more tests and spans five or more lines. For fewer tests or shorter setup, inline the preparation inside each test. Broad setup blocks hide what each test actually needs and make tests harder to read in isolation. |
 | `ETC-ORG-001` | [Mirror lib/ structure in test/](../rules/organization/mirror-lib-structure/RULE.md) | style | Test files should correspond 1:1 to source files. If a module lives at lib/my_app/accounts/user.ex, its tests should be at test/my_app/accounts/user_test.exs. This makes tests discoverable, keeps the relationship between code and tests explicit, and prevents orphaned tests. |
@@ -260,6 +266,21 @@ Rules in this category cover how to write correct and reliable tests for code th
 
 
 ---
+
+## Rules with Credo checks
+
+| Rule | Check |
+|------|-------|
+| [ETC-CORE-013](../rules/core/assert-observable-results/RULE.md) | `credo:TestCritic.Credo.Check.TrivialAssertion` |
+| [ETC-CORE-005](../rules/core/no-process-sleep/RULE.md) | `credo:TestCritic.Credo.Check.ProcessSleepInTest` |
+| [ETC-CORE-012](../rules/core/receive-timeout-budget/RULE.md) | `credo:TestCritic.Credo.Check.ShortReceiveTimeout` |
+| [ETC-CORE-006](../rules/core/start-supervised/RULE.md) | `credo:TestCritic.Credo.Check.NamedProcessOutsideSupervision` |
+| [ETC-ISO-001](../rules/isolation/no-app-put-env-async/RULE.md) | `credo:TestCritic.Credo.Check.AsyncGlobalState` |
+| [ETC-ISO-003](../rules/isolation/no-shared-ets-async/RULE.md) | `credo:TestCritic.Credo.Check.AsyncGlobalState` |
+| [ETC-MOCK-004](../rules/mocking/verify-on-exit/RULE.md) | `credo:TestCritic.Credo.Check.UnverifiedMoxExpect` |
+| [ETC-ORG-006](../rules/organization/deterministic-build-config/RULE.md) | `credo:TestCritic.Credo.Check.NondeterministicConfig` |
+
+[Configure these checks in your project](../README.md#credo-checks).
 
 ## Quick Start by Module Type
 

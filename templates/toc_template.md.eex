@@ -31,6 +31,14 @@
 
 ---
 
+## Rules with Credo checks
+
+| Rule | Check |
+|------|-------|
+<%= for cat <- @categories, rule <- cat.rules, rule.enforced_by do %>| [<%= rule.id %>](../rules/<%= rule.category %>/<%= rule.slug %>/RULE.md) | `<%= rule.enforced_by %>` |
+<% end %>
+[Configure these checks in your project](../README.md#credo-checks).
+
 ## Quick Start by Module Type
 
 **Testing a GenServer?** Start with: core/start-supervised, otp/test-pure-module-directly, otp/genserver-public-api-only, otp/force-sync-after-cast

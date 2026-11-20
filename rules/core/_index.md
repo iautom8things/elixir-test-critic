@@ -26,3 +26,5 @@ process lifecycle management, file I/O isolation, and doctest boundaries.
 | ETC-CORE-009 | use-tmp-dir | Use @tag :tmp_dir for file I/O tests | recommendation |
 | ETC-CORE-010 | doctest-boundaries | Limit doctests to pure functions | recommendation |
 | ETC-CORE-011 | deadline-excludes-setup | Keep setup work outside the deadline a test proves | warning |
+| ETC-CORE-012 | receive-timeout-budget | Give cross-process assertions enough time | warning |
+| ETC-CORE-013 | assert-observable-results | Assert observable results | warning |
