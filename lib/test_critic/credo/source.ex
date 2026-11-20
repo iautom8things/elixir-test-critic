@@ -110,8 +110,9 @@ defmodule TestCritic.Credo.Source do
 
   defp walk({:quote, _, _}, scope, acc, _visit), do: {scope, acc}
 
-  defp walk({:&, _, [{:/, _, [_function, arity]}]}, scope, acc, _visit) when is_integer(arity),
-    do: {scope, acc}
+  defp walk({:&, _, [{:/, _, [_function, arity]}]} = node, scope, acc, visit)
+       when is_integer(arity),
+       do: {scope, visit_node(node, scope, acc, visit)}
 
   defp walk({:__block__, _, expressions}, scope, acc, visit) do
     Enum.reduce(expressions, {scope, acc}, fn expression, {scope, acc} ->

@@ -214,6 +214,46 @@ defmodule TestCritic.Credo.ChecksTest do
     |> refute_issues()
   end
 
+  test "Mox recognizes per-test verification and reaches private helpers by arity" do
+    covered = """
+    defmodule WidgetTest do
+      use ExUnit.Case
+
+      test "registers its own verifier" do
+        alias Mox, as: Mocking
+        Mocking.verify_on_exit!()
+        Mox.expect(WidgetMock, :call, fn -> :ok end)
+      end
+
+      describe "verified group" do
+        setup {Mox, :verify_on_exit!}
+        test "uses a helper", do: with_expectation()
+      end
+
+      defp with_expectation, do: register()
+      defp register, do: Mox.expect(WidgetMock, :call, fn -> :ok end)
+    end
+    """
+
+    refute_issues(run(covered, Check.UnverifiedMoxExpect))
+
+    shared =
+      String.replace(
+        covered,
+        "  defp with_expectation",
+        "  test \"also calls the helper\", do: Enum.each([:ok], fn _ -> with_expectation() end)\n  defp with_expectation"
+      )
+
+    shared
+    |> run(Check.UnverifiedMoxExpect)
+    |> assert_issue(%{trigger: "expect", line_no: 17})
+
+    covered
+    |> String.replace("Mocking.verify_on_exit!()", "if flag?(), do: Mocking.verify_on_exit!()")
+    |> run(Check.UnverifiedMoxExpect)
+    |> assert_issue(%{trigger: "expect", line_no: 7})
+  end
+
   test "receive timeout uses the timeout slot of each supported signature" do
     """
     assert_receive :ready, 10

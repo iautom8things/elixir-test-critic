@@ -7,7 +7,7 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
     param_defaults: [verifying_case_templates: []],
     explanations: [
       check: """
-      ETC-MOCK-004: Register Mox verification in setup for each test that
+      ETC-MOCK-004: Register Mox verification in setup or in each test that
       calls Mox.expect/3 or Mox.expect/4. Without verification, unmet
       expectations can pass silently.
       """,
@@ -36,7 +36,7 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
             issue =
               format_issue(issue_meta,
                 message:
-                  "Register Mox.verify_on_exit! in setup so ExUnit checks every expectation.",
+                  "Register Mox.verify_on_exit! in setup or in the test so ExUnit checks every expectation.",
                 trigger: "expect",
                 line_no: meta[:line],
                 column: meta[:column]
@@ -52,8 +52,10 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
 
   defp first_unverified_expect(body, scope, templates) do
     if Enum.any?(Source.expressions(body), &test_declaration?/1) do
-      body
-      |> unverified_expects(scope, templates)
+      {pending, helpers} = scope_facts(body, scope, templates)
+
+      pending
+      |> reachable_expects(helpers, MapSet.new(), [])
       |> Enum.min_by(&{&1[:line], &1[:column]}, fn -> nil end)
     end
   end
@@ -61,49 +63,114 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
   defp test_declaration?({name, _, _}) when name in [:test, :describe, :use], do: true
   defp test_declaration?(_node), do: false
 
-  defp unverified_expects(body, scope, templates) do
-    {verified?, expects} =
-      Source.reduce(body, scope, {false, []}, fn
+  defp scope_facts(body, scope, templates) do
+    {verified?, pending, helpers} =
+      Source.reduce(body, scope, {false, [], %{}}, fn
         {:defmodule, _, _}, _scope, facts ->
           {:skip, facts}
 
-        {:describe, _, [_, [do: block]]}, scope, {verified?, expects} ->
-          {:skip, {verified?, unverified_expects(block, scope, templates) ++ expects}}
+        {:describe, _, [_, [do: block]]}, scope, {verified?, pending, helpers} ->
+          {child_pending, child_helpers} = scope_facts(block, scope, templates)
+          helpers = Map.merge(helpers, child_helpers, fn _, left, right -> left ++ right end)
+          {:skip, {verified?, child_pending ++ pending, helpers}}
 
-        {:use, _, [module | _]}, scope, {verified?, expects} ->
+        {:test, _, arguments}, scope, facts when is_list(arguments) ->
+          if directly_verifies?(List.last(arguments), scope), do: {:skip, facts}, else: facts
+
+        {:defp, _, [head, [do: block]]}, scope, {verified?, pending, helpers} ->
+          {:skip, {verified?, pending, collect_helper(head, block, scope, helpers)}}
+
+        {:defp, _, [head]}, scope, {verified?, pending, helpers} ->
+          {:skip, {verified?, pending, collect_helper(head, nil, scope, helpers)}}
+
+        {:use, _, [module | _]}, scope, {verified?, pending, helpers} ->
           used_module = Source.module_name(module, scope)
 
           verifies? =
             is_list(used_module) and Enum.map(used_module, &Atom.to_string/1) in templates
 
-          {verified? or verifies?, expects}
+          {verified? or verifies?, pending, helpers}
 
-        {:setup, _, arguments}, scope, {verified?, expects} when is_list(arguments) ->
-          {verified? or verifying_setup?(arguments, scope), expects}
+        {kind, _, arguments}, scope, {verified?, pending, helpers}
+        when kind in [:setup, :setup_all] and is_list(arguments) ->
+          callbacks = List.last(arguments)
+          verified? = verified? or (kind == :setup and verifying_setup?(callbacks, scope))
+          {verified?, setup_refs(callbacks) ++ pending, helpers}
 
-        node, scope, {verified?, expects} ->
-          {verified?, collect_expect(node, scope, expects)}
+        node, scope, {verified?, pending, helpers} ->
+          {verified?, collect_ref(node, scope, pending), helpers}
       end)
 
-    if verified?, do: [], else: expects
+    {if(verified?, do: [], else: pending), helpers}
   end
 
-  defp collect_expect(node, scope, expects) do
-    with {module, :expect, meta, args} when length(args) in [3, 4] <- Source.call(node, scope),
-         true <- mox_call?(module, :expect, args, scope) do
-      [meta | expects]
+  defp collect_helper({:when, _, [head | _guards]}, body, scope, helpers),
+    do: collect_helper(head, body, scope, helpers)
+
+  defp collect_helper({name, _, args}, body, scope, helpers) when is_atom(name) do
+    args = args || []
+    max_arity = length(args)
+    default_count = Enum.count(args, &match?({:\\, _, _}, &1))
+    refs = Source.reduce(body, scope, [], &collect_ref/3)
+
+    Enum.reduce((max_arity - default_count)..max_arity, helpers, fn arity, acc ->
+      arity_refs = if arity == max_arity, do: refs, else: [{:helper, {name, max_arity}}]
+      Map.update(acc, {name, arity}, arity_refs, &(arity_refs ++ &1))
+    end)
+  end
+
+  defp directly_verifies?([do: body], scope) do
+    Source.reduce(body, scope, false, fn node, scope, verified? ->
+      {:skip, verified? or verification_call?(node, scope)}
+    end)
+  end
+
+  defp directly_verifies?(_block, _scope), do: false
+
+  defp collect_ref({:&, _, [{:/, _, [{name, _, context}, arity]}]}, _scope, refs)
+       when is_atom(name) and is_atom(context),
+       do: [{:helper, {name, arity}} | refs]
+
+  defp collect_ref(node, scope, refs) do
+    case Source.call(node, scope) do
+      {module, :expect, meta, args} when length(args) in [3, 4] ->
+        if mox_call?(module, :expect, args, scope),
+          do: [{:expect, meta} | refs],
+          else: helper_ref(module, :expect, args, refs)
+
+      {module, name, _, args} ->
+        helper_ref(module, name, args, refs)
+
+      _ ->
+        refs
+    end
+  end
+
+  defp helper_ref(:local, name, args, refs), do: [{:helper, {name, length(args)}} | refs]
+  defp helper_ref(_module, _name, _args, refs), do: refs
+
+  defp setup_refs(callbacks) do
+    for name <- List.wrap(callbacks), is_atom(name), do: {:helper, {name, 1}}
+  end
+
+  defp reachable_expects([], _helpers, _visited, expects), do: expects
+
+  defp reachable_expects([{:expect, meta} | rest], helpers, visited, expects),
+    do: reachable_expects(rest, helpers, visited, [meta | expects])
+
+  defp reachable_expects([{:helper, key} | rest], helpers, visited, expects) do
+    with {:ok, refs} <- Map.fetch(helpers, key),
+         false <- MapSet.member?(visited, key) do
+      reachable_expects(refs ++ rest, helpers, MapSet.put(visited, key), expects)
     else
-      _ -> expects
+      _ -> reachable_expects(rest, helpers, visited, expects)
     end
   end
 
-  defp verifying_setup?(arguments, scope) do
-    case List.last(arguments) do
-      :verify_on_exit! -> true
-      [do: block] -> verifying_block?(block, scope)
-      callbacks -> Enum.any?(List.wrap(callbacks), &verification_callback?(&1, scope))
-    end
-  end
+  defp verifying_setup?([do: block], scope), do: verifying_block?(block, scope)
+
+  defp verifying_setup?(callbacks, scope),
+    do: Enum.any?(List.wrap(callbacks), &verification_callback?(&1, scope))
 
   defp verification_callback?(:verify_on_exit!, _scope), do: true
 
@@ -118,14 +185,18 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
         {:skip, verified?}
 
       node, scope, verified? ->
-        case Source.call(node, scope) do
-          {module, :verify_on_exit!, _, args} when length(args) in [0, 1] ->
-            verified? or mox_call?(module, :verify_on_exit!, args, scope)
-
-          _ ->
-            verified?
-        end
+        verified? or verification_call?(node, scope)
     end)
+  end
+
+  defp verification_call?(node, scope) do
+    case Source.call(node, scope) do
+      {module, :verify_on_exit!, _, args} when length(args) in [0, 1] ->
+        mox_call?(module, :verify_on_exit!, args, scope)
+
+      _ ->
+        false
+    end
   end
 
   defp mox_call?([:Mox], _name, _args, _scope), do: true
