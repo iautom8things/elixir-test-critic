@@ -7,12 +7,12 @@ test:
 	mix test
 
 validate:
-	mix validate_rules
+	mix shampoo.validate_rules
 
 generate:
-	mix generate_toc
+	mix shampoo.generate_toc
 
 check:
-	mix check_rules
+	mix shampoo.check_rules
 
 all: validate test generate check

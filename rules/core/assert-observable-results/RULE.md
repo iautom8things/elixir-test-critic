@@ -11,7 +11,7 @@ applies_when:
   - "The assertion is intended to verify the behavior of a function or process."
 does_not_apply_when:
   - "A value from the code under test is compared with an independently chosen expectation."
-enforced_by: credo:TestCritic.Credo.Check.TrivialAssertion
+enforced_by: credo:Shampoo.Check.TrivialAssertion
 ---
 
 # Assert observable results

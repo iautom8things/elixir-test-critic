@@ -1,11 +1,11 @@
-defmodule Mix.Tasks.CheckRules do
+defmodule Mix.Tasks.Shampoo.CheckRules do
   @shortdoc "Runs rule example scripts and verifies expected outcomes"
   @moduledoc false
 
   use Mix.Task
 
   def run(args) do
-    rules = TestCritic.RuleParser.discover_rules("rules")
+    rules = Shampoo.RuleParser.discover_rules("rules")
 
     rules =
       case args do
@@ -22,7 +22,7 @@ defmodule Mix.Tasks.CheckRules do
           end
 
         _ ->
-          Mix.raise("Usage: mix check_rules [<category> | <category>/<slug>]")
+          Mix.raise("Usage: mix shampoo.check_rules [<category> | <category>/<slug>]")
       end
 
     if rules == [] do

@@ -1,5 +1,5 @@
-defmodule TestCritic.Credo.Check.NondeterministicConfig do
-  alias TestCritic.Credo.Source
+defmodule Shampoo.Check.NondeterministicConfig do
+  alias Shampoo.Check.Source
 
   use Credo.Check,
     base_priority: :high,

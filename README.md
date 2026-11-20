@@ -1,8 +1,16 @@
-# Elixir Test Critic
+# Shampoo
 
-[![CI](https://github.com/iautom8things/elixir-test-critic/actions/workflows/validate.yml/badge.svg)](https://github.com/iautom8things/elixir-test-critic/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/iautom8things/elixir-test-critic/blob/main/LICENSE)
+<p align="center">
+  <img src="assets/suds.svg" width="220" alt="Suds, the Shampoo mascot">
+</p>
 
-Elixir testing rules that actually run.
+Gets the flakes out of your test suite. No rinse, no repeat.
+
+Credo checks and a rule catalog for ExUnit tests that fail at random or cannot fail at all.
+
+The Hex package for the elixir-test-critic catalog is called Shampoo.
+
+[![CI](https://github.com/iautom8things/shampoo/actions/workflows/validate.yml/badge.svg)](https://github.com/iautom8things/shampoo/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/iautom8things/shampoo/blob/main/LICENSE)
 
 88 rules across 14 categories, each paired with a runnable `good_test.exs`
 and `bad_test.exs` and traced to one of ten foundational principles. CI
@@ -18,7 +26,7 @@ yourself.
 As a Claude Code plugin:
 
 ```
-/plugin marketplace add iautom8things/elixir-test-critic
+/plugin marketplace add iautom8things/shampoo
 /plugin install elixir-test-critic
 ```
 
@@ -40,7 +48,7 @@ declare the marketplace and enable the plugin there:
 {
   "extraKnownMarketplaces": {
     "elixir-test-critic": {
-      "source": { "source": "github", "repo": "iautom8things/elixir-test-critic" }
+      "source": { "source": "github", "repo": "iautom8things/shampoo" }
     }
   },
   "enabledPlugins": { "elixir-test-critic@elixir-test-critic": true }
@@ -61,16 +69,16 @@ Add the Hex package next to your Credo dependency in `mix.exs`.
 defp deps do
   [
     {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-    {:test_critic, "~> 0.4.0", only: [:dev, :test], runtime: false}
+    {:shampoo, "~> 0.4.0", only: [:dev, :test], runtime: false}
   ]
 end
 ```
 
-For an unreleased change, replace the `:test_critic` entry with a GitHub
+For an unreleased change, replace the `:shampoo` entry with a GitHub
 dependency pinned to the commit you reviewed.
 
 ```elixir
-{:test_critic, github: "iautom8things/elixir-test-critic",
+{:shampoo, github: "iautom8things/shampoo",
  ref: "<reviewed-commit-sha>", only: [:dev, :test], runtime: false}
 ```
 
@@ -80,8 +88,6 @@ The `build-config` profile applies that filter and enables just the build-time
 check, so the ordinary lint run keeps its existing file selection.
 
 ```elixir
-alias TestCritic.Credo.Check
-
 config_files = ["config/", "apps/*/config/"]
 
 %{
@@ -90,12 +96,12 @@ config_files = ["config/", "apps/*/config/"]
       name: "default",
       checks: %{
         extra: [
-          {Check.AsyncGlobalState, []},
-          {Check.UnverifiedMoxExpect, []},
-          {Check.ShortReceiveTimeout, []},
-          {Check.ProcessSleepInTest, []},
-          {Check.TrivialAssertion, []},
-          {Check.NamedProcessOutsideSupervision, []}
+          {Shampoo.Check.AsyncGlobalState, []},
+          {Shampoo.Check.UnverifiedMoxExpect, []},
+          {Shampoo.Check.ShortReceiveTimeout, []},
+          {Shampoo.Check.ProcessSleepInTest, []},
+          {Shampoo.Check.TrivialAssertion, []},
+          {Shampoo.Check.NamedProcessOutsideSupervision, []}
         ]
       }
     },
@@ -103,7 +109,7 @@ config_files = ["config/", "apps/*/config/"]
       name: "build-config",
       files: %{included: config_files},
       checks: %{
-        enabled: [{Check.NondeterministicConfig, files: [included: config_files]}]
+        enabled: [{Shampoo.Check.NondeterministicConfig, files: [included: config_files]}]
       }
     }
   ]
@@ -118,20 +124,20 @@ umbrella apps and files scanned by absolute path.
 
 | Check | Rule | Check-specific options |
 |-------|------|------------------------|
-| `NondeterministicConfig` | [ETC-ORG-006](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/organization/deterministic-build-config/RULE.md) | None |
-| `AsyncGlobalState` | [ETC-ISO-001](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/isolation/no-app-put-env-async/RULE.md), [ETC-ISO-003](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/isolation/no-shared-ets-async/RULE.md) | None |
-| `UnverifiedMoxExpect` | [ETC-MOCK-004](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/mocking/verify-on-exit/RULE.md) | `verifying_case_templates: []`. List modules whose setup verifies Mox for every test, such as `[MyApp.DataCase]`. |
-| `ShortReceiveTimeout` | [ETC-CORE-012](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/core/receive-timeout-budget/RULE.md) | `min_timeout: 500` ms. `macros: [:assert_receive, :assert_push, :assert_reply, :assert_broadcast, :assert_redirect, :assert_patch, :render_async]`. Custom names take the timeout as their last argument. In `test/test_helper.exs`, the check warns when it can determine that `assert_receive_timeout` is missing or below the same minimum. Set `require_configured_default: false` to turn off the helper check. |
-| `ProcessSleepInTest` | [ETC-CORE-005](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/core/no-process-sleep/RULE.md) | `scope: :test_flow` covers test flow and helpers that only sleep. Use `scope: :all` to include sleeps elsewhere. `excluded_paths: ["test/support"]` is relative to each Mix project. Set it to `[]` to include support code. |
-| `TrivialAssertion` | [ETC-CORE-013](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/core/assert-observable-results/RULE.md) | None |
-| `NamedProcessOutsideSupervision` | [ETC-CORE-006](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/core/start-supervised/RULE.md) | None |
+| `NondeterministicConfig` | [ETC-ORG-006](https://github.com/iautom8things/shampoo/blob/main/rules/organization/deterministic-build-config/RULE.md) | None |
+| `AsyncGlobalState` | [ETC-ISO-001](https://github.com/iautom8things/shampoo/blob/main/rules/isolation/no-app-put-env-async/RULE.md), [ETC-ISO-003](https://github.com/iautom8things/shampoo/blob/main/rules/isolation/no-shared-ets-async/RULE.md) | None |
+| `UnverifiedMoxExpect` | [ETC-MOCK-004](https://github.com/iautom8things/shampoo/blob/main/rules/mocking/verify-on-exit/RULE.md) | `verifying_case_templates: []`. List modules whose setup verifies Mox for every test, such as `[MyApp.DataCase]`. |
+| `ShortReceiveTimeout` | [ETC-CORE-012](https://github.com/iautom8things/shampoo/blob/main/rules/core/receive-timeout-budget/RULE.md) | `min_timeout: 500` ms. `macros: [:assert_receive, :assert_push, :assert_reply, :assert_broadcast, :assert_redirect, :assert_patch, :render_async]`. Custom names take the timeout as their last argument. In `test/test_helper.exs`, the check warns when it can determine that `assert_receive_timeout` is missing or below the same minimum. Set `require_configured_default: false` to turn off the helper check. |
+| `ProcessSleepInTest` | [ETC-CORE-005](https://github.com/iautom8things/shampoo/blob/main/rules/core/no-process-sleep/RULE.md) | `scope: :test_flow` covers test flow and helpers that only sleep. Use `scope: :all` to include sleeps elsewhere. `excluded_paths: ["test/support"]` is relative to each Mix project. Set it to `[]` to include support code. |
+| `TrivialAssertion` | [ETC-CORE-013](https://github.com/iautom8things/shampoo/blob/main/rules/core/assert-observable-results/RULE.md) | None |
+| `NamedProcessOutsideSupervision` | [ETC-CORE-006](https://github.com/iautom8things/shampoo/blob/main/rules/core/start-supervised/RULE.md) | None |
 
 For an intentional exception, give the reason on its own comment line and put
 Credo's directive immediately before the reported line.
 
 ```elixir
 # The stub must remain busy while the caller times out.
-# credo:disable-for-next-line TestCritic.Credo.Check.ProcessSleepInTest
+# credo:disable-for-next-line Shampoo.Check.ProcessSleepInTest
 Process.sleep(50)
 ```
 
@@ -249,11 +255,11 @@ Full descriptions in [`rules/00-principles.md`][principles].
 
 ```bash
 mix deps.get
-mix validate_rules                       # frontmatter + structure
-mix check_rules                          # run every good/bad example
-mix check_rules core                     # one category
-mix check_rules core/start-supervised    # one rule
-mix generate_toc                         # regenerate the catalog
+mix shampoo.validate_rules                       # frontmatter + structure
+mix shampoo.check_rules                          # run every good/bad example
+mix shampoo.check_rules core                     # one category
+mix shampoo.check_rules core/start-supervised    # one rule
+mix shampoo.generate_toc                         # regenerate the catalog
 mix test                                 # mix tasks and Credo checks
 ```
 
@@ -274,11 +280,11 @@ See [`CONTRIBUTING.md`][contributing] for how to propose a new rule and
 MIT — see [`LICENSE`][license].
 
 [cc]: https://docs.claude.com/en/docs/claude-code
-[toc]: https://github.com/iautom8things/elixir-test-critic/blob/main/toc/RULES_REFERENCE.md
-[rules]: https://github.com/iautom8things/elixir-test-critic/tree/main/rules/
-[config]: https://github.com/iautom8things/elixir-test-critic/blob/main/docs/CONFIG.md
-[principles]: https://github.com/iautom8things/elixir-test-critic/blob/main/rules/00-principles.md
-[contributing]: https://github.com/iautom8things/elixir-test-critic/blob/main/CONTRIBUTING.md
-[rule-structure]: https://github.com/iautom8things/elixir-test-critic/blob/main/docs/RULE_STRUCTURE.md
-[license]: https://github.com/iautom8things/elixir-test-critic/blob/main/LICENSE
-[check-rules]: https://github.com/iautom8things/elixir-test-critic/blob/main/lib/mix/tasks/check_rules.ex
+[toc]: https://github.com/iautom8things/shampoo/blob/main/toc/RULES_REFERENCE.md
+[rules]: https://github.com/iautom8things/shampoo/tree/main/rules/
+[config]: https://github.com/iautom8things/shampoo/blob/main/docs/CONFIG.md
+[principles]: https://github.com/iautom8things/shampoo/blob/main/rules/00-principles.md
+[contributing]: https://github.com/iautom8things/shampoo/blob/main/CONTRIBUTING.md
+[rule-structure]: https://github.com/iautom8things/shampoo/blob/main/docs/RULE_STRUCTURE.md
+[license]: https://github.com/iautom8things/shampoo/blob/main/LICENSE
+[check-rules]: https://github.com/iautom8things/shampoo/blob/main/lib/mix/tasks/shampoo.check_rules.ex

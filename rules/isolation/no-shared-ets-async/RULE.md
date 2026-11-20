@@ -17,7 +17,7 @@ does_not_apply_when:
   - "Read-only ETS tables populated once in test_helper.exs before any tests run"
 related_rules:
   - ETC-TELE-003
-enforced_by: credo:TestCritic.Credo.Check.AsyncGlobalState
+enforced_by: credo:Shampoo.Check.AsyncGlobalState
 ---
 
 # Do not share ETS/persistent_term in async tests

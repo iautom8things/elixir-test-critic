@@ -1,7 +1,7 @@
-defmodule TestCritic.Validator do
+defmodule Shampoo.Validator do
   @moduledoc false
 
-  alias TestCritic.RuleParser
+  alias Shampoo.RuleParser
 
   @allowed_files ~w(RULE.md good_test.exs bad_test.exs support.ex)
   @valid_expected ~w(failure flaky passes)
@@ -68,7 +68,7 @@ defmodule TestCritic.Validator do
       :error ->
         []
 
-      {:ok, "credo:TestCritic.Credo.Check." <> name} ->
+      {:ok, "credo:Shampoo.Check." <> name} ->
         if credo_check?(name) do
           []
         else
@@ -76,14 +76,14 @@ defmodule TestCritic.Validator do
         end
 
       {:ok, _value} ->
-        [format_error(label, "enforced_by must use credo:TestCritic.Credo.Check.<Module>")]
+        [format_error(label, "enforced_by must use credo:Shampoo.Check.<Module>")]
     end
   end
 
   defp credo_check?(name) do
-    full_name = "Elixir.TestCritic.Credo.Check." <> name
+    full_name = "Elixir.Shampoo.Check." <> name
 
-    Enum.any?(Application.spec(:test_critic, :modules) || [], fn module ->
+    Enum.any?(Application.spec(:shampoo, :modules) || [], fn module ->
       Atom.to_string(module) == full_name and Code.ensure_loaded?(module) and
         Credo.Check in List.wrap(module.module_info(:attributes)[:behaviour])
     end)

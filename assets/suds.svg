@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 400" role="img" aria-labelledby="t d">
+  <title id="t">Suds, the Shampoo mascot</title>
+  <desc id="d">A cheerful purple drop-shaped shampoo bottle with a crown of foam, holding a scrub brush.</desc>
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b085f5"/>
+      <stop offset="0.55" stop-color="#7c4ddb"/>
+      <stop offset="1" stop-color="#4b2a99"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb347"/>
+      <stop offset="1" stop-color="#f26b1d"/>
+    </linearGradient>
+    <radialGradient id="foam" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dfe9ff"/>
+    </radialGradient>
+  </defs>
+
+  <!-- falling flakes, on their way out -->
+  <g fill="#cfd6e6">
+    <rect x="34" y="250" width="9" height="9" rx="2" transform="rotate(20 38 254)"/>
+    <rect x="52" y="318" width="7" height="7" rx="2" transform="rotate(-15 55 321)"/>
+    <rect x="270" y="270" width="9" height="9" rx="2" transform="rotate(35 274 274)"/>
+    <rect x="286" y="335" width="6" height="6" rx="2" transform="rotate(10 289 338)"/>
+    <rect x="22" y="352" width="6" height="6" rx="2" transform="rotate(50 25 355)"/>
+  </g>
+
+  <!-- shadow -->
+  <ellipse cx="160" cy="378" rx="78" ry="10" fill="#1d1238" opacity="0.18"/>
+
+  <!-- pump cap -->
+  <rect x="150" y="44" width="20" height="40" rx="4" fill="url(#cap)"/>
+  <path d="M112 30 h66 a10 10 0 0 1 10 10 v8 h-58 l-18 12 z" fill="url(#cap)"/>
+  <rect x="136" y="80" width="48" height="20" rx="6" fill="#f26b1d"/>
+
+  <!-- drop-shaped bottle body -->
+  <path d="M160 96
+           C 205 150, 252 208, 252 276
+           C 252 334, 211 372, 160 372
+           C 109 372, 68 334, 68 276
+           C 68 208, 115 150, 160 96 Z" fill="url(#body)"/>
+  <!-- highlight -->
+  <path d="M132 170 C 108 204, 92 240, 92 276 C 92 296, 97 313, 106 327"
+        fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- foam crown -->
+  <g fill="url(#foam)" stroke="#c5d3f5" stroke-width="2">
+    <circle cx="118" cy="150" r="20"/>
+    <circle cx="146" cy="128" r="24"/>
+    <circle cx="178" cy="126" r="22"/>
+    <circle cx="204" cy="150" r="19"/>
+    <circle cx="160" cy="152" r="24"/>
+    <circle cx="228" cy="112" r="9"/>
+    <circle cx="246" cy="88" r="6"/>
+    <circle cx="92" cy="116" r="7"/>
+  </g>
+
+  <!-- face -->
+  <g>
+    <ellipse cx="134" cy="236" rx="15" ry="18" fill="#ffffff"/>
+    <ellipse cx="186" cy="236" rx="15" ry="18" fill="#ffffff"/>
+    <circle cx="138" cy="240" r="8" fill="#231942"/>
+    <circle cx="190" cy="240" r="8" fill="#231942"/>
+    <circle cx="141" cy="236" r="3" fill="#ffffff"/>
+    <circle cx="193" cy="236" r="3" fill="#ffffff"/>
+    <path d="M118 212 q16 -10 30 -2" fill="none" stroke="#231942" stroke-width="4" stroke-linecap="round"/>
+    <path d="M172 210 q14 -8 30 2" fill="none" stroke="#231942" stroke-width="4" stroke-linecap="round"/>
+    <path d="M136 274 q24 26 48 0" fill="#231942" stroke="#231942" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M148 286 q12 9 24 0" fill="#ff7a9a"/>
+    <circle cx="112" cy="268" r="9" fill="#ff9ec4" opacity="0.6"/>
+    <circle cx="208" cy="268" r="9" fill="#ff9ec4" opacity="0.6"/>
+  </g>
+
+  <!-- green check badge: the suite is clean -->
+  <g transform="translate(160 326)">
+    <circle r="20" fill="#2fbf71"/>
+    <path d="M-9 0 l6 7 l12 -13" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- arms -->
+  <path d="M74 262 q-34 4 -40 -28" fill="none" stroke="#4b2a99" stroke-width="11" stroke-linecap="round"/>
+  <path d="M246 262 q30 0 38 -30" fill="none" stroke="#4b2a99" stroke-width="11" stroke-linecap="round"/>
+  <!-- scrub brush in the right hand -->
+  <g transform="translate(284 222) rotate(-25)">
+    <rect x="-22" y="-10" width="44" height="12" rx="5" fill="#f26b1d"/>
+    <g stroke="#ffd9a8" stroke-width="3" stroke-linecap="round">
+      <path d="M-16 -10 v-10"/><path d="M-8 -10 v-12"/><path d="M0 -10 v-12"/><path d="M8 -10 v-12"/><path d="M16 -10 v-10"/>
+    </g>
+  </g>
+</svg>

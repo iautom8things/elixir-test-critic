@@ -6,9 +6,9 @@
 Mix.install([:ecto_sql, :ecto_sqlite3])
 Code.require_file("../../_support/db.exs", __DIR__)
 
-:ok = Ecto.Adapters.SQL.Sandbox.checkout(TestCritic.Repo)
-Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
-  TestCritic.Repo.query!("""
+:ok = Ecto.Adapters.SQL.Sandbox.checkout(Shampoo.Repo)
+Ecto.Adapters.SQL.Sandbox.unboxed_run(Shampoo.Repo, fn ->
+  Shampoo.Repo.query!("""
   CREATE TABLE IF NOT EXISTS bad_allow_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     label TEXT NOT NULL,
@@ -17,7 +17,7 @@ Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
   )
   """)
 end)
-Ecto.Adapters.SQL.Sandbox.checkin(TestCritic.Repo)
+Ecto.Adapters.SQL.Sandbox.checkin(Shampoo.Repo)
 
 ExUnit.start(autorun: false)
 
@@ -35,7 +35,7 @@ defmodule AllowForSpawnedProcessesBadTest do
 
   alias Ecto.Adapters.SQL.Sandbox
   alias SandboxAllowBad.Item
-  alias TestCritic.Repo
+  alias Shampoo.Repo
 
   setup do
     :ok = Sandbox.checkout(Repo)

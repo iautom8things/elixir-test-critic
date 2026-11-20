@@ -1,4 +1,4 @@
-defmodule TestCritic.ReleaseVersionTest do
+defmodule Shampoo.ReleaseVersionTest do
   use ExUnit.Case, async: true
 
   test "the plugin and its marketplace entry match the Mix version" do

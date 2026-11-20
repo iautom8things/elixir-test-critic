@@ -58,7 +58,7 @@ for the canonical template.
 | `sources` | list | URLs or references backing the rule |
 | `conflicts_with` | list | Rule IDs this one contradicts |
 | `status` | enum | Defaults to `active` |
-| `enforced_by` | string | `credo:TestCritic.Credo.Check.<Module>` for a check that implements a static part of the rule |
+| `enforced_by` | string | `credo:Shampoo.Check.<Module>` for a check that implements a static part of the rule |
 
 ## RULE.md Body
 
@@ -116,23 +116,23 @@ Don't invent new principle short names without discussion — open an issue firs
 
 Two Mix tasks enforce structure:
 
-- `mix validate_rules` — validates frontmatter and directory structure
-- `mix check_rules` — executes every `good_test.exs` and `bad_test.exs` and
+- `mix shampoo.validate_rules` — validates frontmatter and directory structure
+- `mix shampoo.check_rules` — executes every `good_test.exs` and `bad_test.exs` and
   asserts each exits 0
 
 Both must pass in CI before a rule can land. Run locally with:
 
 ```bash
-mix validate_rules
-mix check_rules                        # all rules
-mix check_rules core                   # one category
-mix check_rules core/start-supervised  # one rule
+mix shampoo.validate_rules
+mix shampoo.check_rules                        # all rules
+mix shampoo.check_rules core                   # one category
+mix shampoo.check_rules core/start-supervised  # one rule
 ```
 
 After adding a rule, regenerate the TOC:
 
 ```bash
-mix generate_toc
+mix shampoo.generate_toc
 ```
 
 CI asserts the committed TOC matches the generated output.

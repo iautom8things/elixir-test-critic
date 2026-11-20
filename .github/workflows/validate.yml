@@ -46,26 +46,26 @@ jobs:
         run: mix format --check-formatted
 
       - name: Run strict Credo on check code
-        run: mix credo --strict 'lib/test_critic/credo/**/*.ex'
+        run: mix credo --strict 'lib/shampoo/check/**/*.ex'
 
       - name: Build Hex package and documentation
         if: matrix.elixir == '1.18'
         run: |
-          mix hex.build --unpack --output "$RUNNER_TEMP/test_critic"
+          mix hex.build --unpack --output "$RUNNER_TEMP/shampoo"
           mix docs --warnings-as-errors
 
       - name: Validate rules
-        run: mix validate_rules
+        run: mix shampoo.validate_rules
 
       - name: Run tests
         run: mix test
 
       - name: Generate TOC
-        run: mix generate_toc
+        run: mix shampoo.generate_toc
 
       - name: Check TOC is up to date
         run: git diff --exit-code toc/
 
       - name: Check rules
-        run: mix check_rules
+        run: mix shampoo.check_rules
         timeout-minutes: 30

@@ -1,9 +1,9 @@
-defmodule TestCritic.Credo.ChecksTest do
+defmodule Shampoo.ChecksTest do
   use Credo.Test.Case
 
   alias Credo.Check.ConfigCommentFinder
   alias Credo.CLI.Filter
-  alias TestCritic.Credo.Check
+  alias Shampoo.Check
 
   @test_file "test/widget_test.exs"
   @project_prefixes ["", "./", "apps/widgets/", "/elsewhere/widgets/", "/elsewhere/apps/widgets/"]

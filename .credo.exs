@@ -1,5 +1,3 @@
-alias TestCritic.Credo.Check
-
 %{
   configs: [
     %{
@@ -9,13 +7,13 @@ alias TestCritic.Credo.Check
       },
       checks: %{
         extra: [
-          {Check.NondeterministicConfig, []},
-          {Check.AsyncGlobalState, []},
-          {Check.UnverifiedMoxExpect, []},
-          {Check.ShortReceiveTimeout, []},
-          {Check.ProcessSleepInTest, []},
-          {Check.TrivialAssertion, []},
-          {Check.NamedProcessOutsideSupervision, []}
+          {Shampoo.Check.NondeterministicConfig, []},
+          {Shampoo.Check.AsyncGlobalState, []},
+          {Shampoo.Check.UnverifiedMoxExpect, []},
+          {Shampoo.Check.ShortReceiveTimeout, []},
+          {Shampoo.Check.ProcessSleepInTest, []},
+          {Shampoo.Check.TrivialAssertion, []},
+          {Shampoo.Check.NamedProcessOutsideSupervision, []}
         ]
       }
     }

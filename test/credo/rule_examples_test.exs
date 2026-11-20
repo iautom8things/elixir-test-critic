@@ -1,8 +1,8 @@
-defmodule TestCritic.Credo.RuleExamplesTest do
+defmodule Shampoo.Check.RuleExamplesTest do
   use Credo.Test.Case
 
-  alias TestCritic.Credo.Check
-  alias TestCritic.RuleParser
+  alias Shampoo.Check
+  alias Shampoo.RuleParser
 
   setup_all do
     {:ok, _} = Application.ensure_all_started(:credo)
@@ -11,7 +11,7 @@ defmodule TestCritic.Credo.RuleExamplesTest do
 
   test "each check agrees with its linked runnable examples" do
     modules =
-      :test_critic
+      :shampoo
       |> Application.spec(:modules)
       |> Map.new(&{"credo:" <> inspect(&1), &1})
 

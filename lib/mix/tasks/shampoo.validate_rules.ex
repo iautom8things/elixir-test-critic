@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.ValidateRules do
+defmodule Mix.Tasks.Shampoo.ValidateRules do
   @shortdoc "Validates all rule frontmatter and directory structure"
   @moduledoc false
 
@@ -7,9 +7,9 @@ defmodule Mix.Tasks.ValidateRules do
   def run(_args) do
     Mix.Task.run("app.start")
 
-    case TestCritic.Validator.validate_all("rules") do
+    case Shampoo.Validator.validate_all("rules") do
       :ok ->
-        rules = TestCritic.RuleParser.discover_rules("rules")
+        rules = Shampoo.RuleParser.discover_rules("rules")
         Mix.shell().info("All #{length(rules)} rules valid.")
 
       {:error, errors} ->

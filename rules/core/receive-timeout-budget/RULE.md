@@ -11,7 +11,7 @@ applies_when:
   - "A test waits for a message that another process may still be working on."
 does_not_apply_when:
   - "The message is already synchronized, a short refute is intentional, or the deadline itself is the behavior under test."
-enforced_by: credo:TestCritic.Credo.Check.ShortReceiveTimeout
+enforced_by: credo:Shampoo.Check.ShortReceiveTimeout
 ---
 
 # Give cross-process assertions enough time

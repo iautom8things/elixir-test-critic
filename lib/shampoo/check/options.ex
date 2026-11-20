@@ -1,4 +1,4 @@
-defmodule TestCritic.Credo.Options do
+defmodule Shampoo.Check.Options do
   @moduledoc false
 
   alias Credo.Check.Params

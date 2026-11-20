@@ -1,7 +1,7 @@
-defmodule TestCritic.RuleParserTest do
+defmodule Shampoo.RuleParserTest do
   use ExUnit.Case
 
-  alias TestCritic.RuleParser
+  alias Shampoo.RuleParser
 
   describe "parse/2" do
     test "extracts YAML frontmatter and body" do

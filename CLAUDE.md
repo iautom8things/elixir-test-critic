@@ -39,7 +39,7 @@ The rules are consumed in two ways:
 │   └── RULES_REFERENCE.md     # Auto-generated condensed catalog
 ├── templates/
 │   └── toc_template.md.eex    # EEx template for RULES_REFERENCE.md
-├── lib/mix/tasks/             # validate_rules, check_rules, generate_toc
+├── lib/mix/tasks/             # shampoo.validate_rules, shampoo.check_rules, shampoo.generate_toc
 └── test/                      # Tests for the mix tasks and support modules
 ```
 
@@ -53,11 +53,11 @@ requirements, and category index format. Do not duplicate that content here.
 
 ```bash
 mix deps.get               # Fetch dependencies
-mix validate_rules         # Validate frontmatter + structure
-mix check_rules            # Run every good_test.exs and bad_test.exs
-mix check_rules <category> # One category
-mix check_rules <cat>/<slug>  # One rule
-mix generate_toc           # Regenerate toc/RULES_REFERENCE.md
+mix shampoo.validate_rules         # Validate frontmatter + structure
+mix shampoo.check_rules            # Run every good_test.exs and bad_test.exs
+mix shampoo.check_rules <category> # One category
+mix shampoo.check_rules <cat>/<slug>  # One rule
+mix shampoo.generate_toc           # Regenerate toc/RULES_REFERENCE.md
 mix test                   # Project tests (mix task internals)
 ```
 
@@ -74,22 +74,22 @@ mix test                   # Project tests (mix task internals)
 6. Write honest, self-contained `good_test.exs` and `bad_test.exs` — both must
    exit 0.
 7. Add the rule to `rules/<category>/_index.md`.
-8. Run `mix validate_rules && mix check_rules <cat>/<slug>` locally.
-9. Run `mix generate_toc` and commit the regenerated TOC.
+8. Run `mix shampoo.validate_rules && mix shampoo.check_rules <cat>/<slug>` locally.
+9. Run `mix shampoo.generate_toc` and commit the regenerated TOC.
 
 ## When Modifying a Rule
 
 - Update frontmatter, prose, and examples together — they must stay consistent.
 - If you change the ID or slug, update cross-references in `related_rules`,
   `conflicts_with`, and the category `_index.md`.
-- Regenerate the TOC with `mix generate_toc` and commit.
+- Regenerate the TOC with `mix shampoo.generate_toc` and commit.
 
 ## When Modifying Mix Tasks or Support Code
 
-- Source lives in `lib/test_critic/` and `lib/mix/tasks/`.
+- Source lives in `lib/shampoo/` and `lib/mix/tasks/`.
 - Tests live in `test/`.
 - Run `mix test` after changes.
-- If behavior of `validate_rules` or `check_rules` changes, verify CI still
+- If behavior of `shampoo.validate_rules` or `shampoo.check_rules` changes, verify CI still
   passes — `.github/workflows/validate.yml` runs the full suite across
   Elixir 1.17-1.19 and OTP 27-28.
 
@@ -110,7 +110,7 @@ mix test                   # Project tests (mix task internals)
 ## What Not to Do
 
 - Don't hand-edit `toc/RULES_REFERENCE.md`. It is generated. CI will fail if
-  the committed file drifts from `mix generate_toc` output.
+  the committed file drifts from `mix shampoo.generate_toc` output.
 - Don't invent new principle short names without discussion. The ten
   principles in `rules/00-principles.md` are deliberate.
 - Don't introduce dependencies to the project beyond what's needed for the

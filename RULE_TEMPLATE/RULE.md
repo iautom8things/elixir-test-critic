@@ -18,7 +18,7 @@ does_not_apply_when:
 # sources: ["URL or reference"]
 # conflicts_with: [ETC-CAT-NNN]
 # status: active
-# enforced_by: credo:TestCritic.Credo.Check.<Module>
+# enforced_by: credo:Shampoo.Check.<Module>
 ---
 
 # Rule title here

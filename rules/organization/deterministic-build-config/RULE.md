@@ -11,7 +11,7 @@ applies_when:
   - "A run-specific value is generated in build-time config."
 does_not_apply_when:
   - "The value is computed in config/runtime.exs or when the application needs it."
-enforced_by: credo:TestCritic.Credo.Check.NondeterministicConfig
+enforced_by: credo:Shampoo.Check.NondeterministicConfig
 ---
 
 # Keep build-time configuration deterministic

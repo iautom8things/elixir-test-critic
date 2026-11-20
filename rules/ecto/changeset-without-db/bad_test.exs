@@ -8,11 +8,11 @@ ExUnit.start(autorun: true)
 
 defmodule EctoWithDb.Repo do
   use Ecto.Repo,
-    otp_app: :test_critic_bad,
+    otp_app: :shampoo_bad,
     adapter: Ecto.Adapters.SQLite3
 end
 
-Application.put_env(:test_critic_bad, EctoWithDb.Repo,
+Application.put_env(:shampoo_bad, EctoWithDb.Repo,
   database: ":memory:",
   pool_size: 1
 )

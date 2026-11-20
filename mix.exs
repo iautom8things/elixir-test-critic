@@ -1,21 +1,27 @@
-defmodule TestCritic.MixProject do
+defmodule Shampoo.MixProject do
   use Mix.Project
 
   @version "0.4.0"
-  @source_url "https://github.com/iautom8things/elixir-test-critic"
+  @source_url "https://github.com/iautom8things/shampoo"
 
   def project do
     [
-      app: :test_critic,
+      app: :shampoo,
       version: @version,
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       description:
-        "Credo checks for flaky Elixir tests, weak assertions, and unstable build configuration.",
+        "Gets the flakes out of your test suite. Credo checks for flaky ExUnit tests, assertions that cannot fail, and unstable build configuration.",
       package: package(),
       source_url: @source_url,
-      docs: [main: "readme", extras: ["README.md"], source_ref: "v#{@version}"],
+      docs: [
+        main: "readme",
+        extras: ["README.md"],
+        logo: "assets/suds.svg",
+        assets: %{"assets" => "assets"},
+        source_ref: "v#{@version}"
+      ],
       aliases: [credo: ["compile", "credo"]],
       deps: deps()
     ]
@@ -25,7 +31,7 @@ defmodule TestCritic.MixProject do
     [extra_applications: [:logger]]
   end
 
-  defp elixirc_paths(:prod), do: ["lib/test_critic/credo"]
+  defp elixirc_paths(:prod), do: ["lib/shampoo/check"]
   defp elixirc_paths(_env), do: ["lib"]
 
   defp package do
@@ -33,7 +39,7 @@ defmodule TestCritic.MixProject do
       licenses: ["MIT"],
       maintainers: ["iautom8things"],
       links: %{"GitHub" => @source_url},
-      files: ~w(lib/test_critic/credo mix.exs README.md LICENSE)
+      files: ~w(lib/shampoo/check assets/suds.svg mix.exs README.md LICENSE)
     ]
   end
 

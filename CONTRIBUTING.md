@@ -39,26 +39,26 @@ or clarify that body of knowledge are welcome.
 5. **Write runnable examples** — both `good_test.exs` and `bad_test.exs` must
    exit 0. The anti-pattern is illustrated by code, not test failure.
 6. **Update the category index** — add your rule to `rules/<category>/_index.md`.
-7. **Regenerate the TOC** — run `mix generate_toc` and commit the result.
+7. **Regenerate the TOC** — run `mix shampoo.generate_toc` and commit the result.
 
 ## Quality Gates
 
 Every pull request runs CI against Elixir 1.17-1.19 and OTP 27-28. The
 following must pass:
 
-- `mix validate_rules` — frontmatter and directory structure are valid
+- `mix shampoo.validate_rules` — frontmatter and directory structure are valid
 - `mix test` — project tests pass
-- `mix generate_toc` — the committed TOC matches generated output (`git diff --exit-code toc/`)
-- `mix check_rules` — every rule's example scripts exit 0
+- `mix shampoo.generate_toc` — the committed TOC matches generated output (`git diff --exit-code toc/`)
+- `mix shampoo.check_rules` — every rule's example scripts exit 0
 
 Run locally before opening a PR:
 
 ```bash
 mix deps.get
-mix validate_rules
+mix shampoo.validate_rules
 mix test
-mix generate_toc
-mix check_rules
+mix shampoo.generate_toc
+mix shampoo.check_rules
 ```
 
 Or with the provided Makefile:
@@ -77,8 +77,8 @@ make all
 - [ ] Both `good_test.exs` and `bad_test.exs` exit 0
 - [ ] `bad_test.exs` has a `# BAD PRACTICE:` comment describing the anti-pattern
 - [ ] Category `_index.md` lists the new rule
-- [ ] `mix validate_rules`, `mix check_rules`, `mix test` all pass locally
-- [ ] TOC is regenerated with `mix generate_toc`
+- [ ] `mix shampoo.validate_rules`, `mix shampoo.check_rules`, `mix test` all pass locally
+- [ ] TOC is regenerated with `mix shampoo.generate_toc`
 
 ## Style Notes
 
