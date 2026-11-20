@@ -39,26 +39,47 @@ defmodule TestCritic.Credo.Check.NamedProcessOutsideSupervision do
         nested = nested_start_arguments(child) ++ options
         {:skip, Source.reduce(nested, scope, issues, &find_start(&1, &2, &3, issue_meta))}
 
+      {module, :assert, _, [{operator, _, [left, right]} | message]}
+      when module in [:local, [:ExUnit, :Assertions]] and operator in [:==, :===, :=] ->
+        negative_start(left, right, message, scope, issues, issue_meta)
+
       {module, name, meta, args}
       when name in [:start, :start_link] and (is_list(module) or module == :__MODULE__) ->
-        if named?(module, args) do
-          issue =
-            format_issue(issue_meta,
-              message:
-                "Start named processes with start_supervised or start_supervised! so ExUnit waits for cleanup.",
-              trigger: Atom.to_string(name),
-              line_no: meta[:line],
-              column: meta[:column]
-            )
-
-          [issue | issues]
-        else
-          issues
-        end
+        report_start(module, name, meta, args, issues, issue_meta)
 
       _ ->
         issues
     end
+  end
+
+  defp report_start(module, name, meta, args, issues, issue_meta) do
+    if named?(module, args) do
+      issue =
+        format_issue(issue_meta,
+          message:
+            "Start named processes with start_supervised or start_supervised! so ExUnit waits for cleanup.",
+          trigger: Atom.to_string(name),
+          line_no: meta[:line],
+          column: meta[:column]
+        )
+
+      [issue | issues]
+    else
+      issues
+    end
+  end
+
+  defp negative_start(left, right, message, scope, issues, issue_meta) do
+    cond do
+      left == :ignore -> skip_ignored_start(right, message, scope, issues, issue_meta)
+      right == :ignore -> skip_ignored_start(left, message, scope, issues, issue_meta)
+      true -> issues
+    end
+  end
+
+  defp skip_ignored_start(child, message, scope, issues, issue_meta) do
+    nested = nested_start_arguments(child) ++ message
+    {:skip, Source.reduce(nested, scope, issues, &find_start(&1, &2, &3, issue_meta))}
   end
 
   defp nested_start_arguments({{:., _, [_, name]}, _, args})

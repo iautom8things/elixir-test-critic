@@ -104,7 +104,8 @@ alias TestCritic.Credo.Check
 
 Run `mix deps.get` and `mix credo`. All seven checks report high-priority
 warnings and accept Credo's standard check options, including `priority` and
-`files`.
+`files`. Test-only checks recognize `*_test.exs` files under `test/`, including
+umbrella apps and files scanned by absolute path.
 
 | Check | Rule | Check-specific options |
 |-------|------|------------------------|

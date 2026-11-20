@@ -289,6 +289,17 @@ defmodule TestCritic.Credo.ChecksTest do
     |> refute_issues()
   end
 
+  test "receive timeout allows a zero-timeout navigation assertion expected to raise" do
+    """
+    assert_raise ArgumentError, fn -> assert_patch(view, 0) end
+    assert_raise ArgumentError, "missing navigation", fn -> assert_redirect(view, "/next", 0) end
+    assert_patch(view, 0)
+    assert_raise ArgumentError, fn -> assert_patch(view, 100) end
+    """
+    |> run(Check.ShortReceiveTimeout)
+    |> assert_issues_match([%{line_no: 3}, %{line_no: 4}])
+  end
+
   test "receive timeout honors min_timeout and macros, with refute forms always exempt" do
     """
     assert_receive :ready, 100
@@ -352,6 +363,12 @@ defmodule TestCritic.Credo.ChecksTest do
     refute_issues(run(source, check, "lib/widget.ex"))
   end
 
+  test "sleep permits a deliberate indefinite block" do
+    "spawn(fn -> Process.sleep(:infinity) end)\n:infinity |> :timer.sleep()"
+    |> run(Check.ProcessSleepInTest)
+    |> refute_issues()
+  end
+
   test "trivial assertions include comparisons of literals and identical AST" do
     """
     assert true
@@ -371,9 +388,22 @@ defmodule TestCritic.Credo.ChecksTest do
     assert is_atom(Widget.status())
     refute value == value
     assert ready?()
+    assert Widget.digest(value) == Widget.digest(value)
+    assert source.read() === source.read()
+    assert next() == next()
     """
     |> run(Check.TrivialAssertion)
     |> refute_issues()
+  end
+
+  test "named process checks allow assertions that startup deliberately returns ignore" do
+    """
+    assert Widget.start_link(name: Widget, enabled: false) == :ignore
+    assert :ignore = Widget.start(name: Widget, enabled: false)
+    assert {:ok, _pid} = Widget.start_link(name: Widget)
+    """
+    |> run(Check.NamedProcessOutsideSupervision)
+    |> assert_issue(%{line_no: 3, trigger: "start_link"})
   end
 
   test "named process checks pinpoint named starts and linked starts" do

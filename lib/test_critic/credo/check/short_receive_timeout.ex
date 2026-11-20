@@ -46,15 +46,47 @@ defmodule TestCritic.Credo.Check.ShortReceiveTimeout do
     macros = Params.get(params, :macros, __MODULE__)
 
     Source.reduce(source_file, [], fn node, scope, issues ->
-      with {_, name, meta, args} <- Source.call(node, scope),
-           true <- name in macros and not String.starts_with?(Atom.to_string(name), "refute_"),
-           true <- short?(timeout(name, args), min_timeout) do
-        [timeout_issue(issue_meta, name, meta, min_timeout) | issues]
-      else
-        _ -> issues
-      end
+      call = Source.call(node, scope)
+
+      if negative_live_navigation?(call, scope),
+        do: {:skip, issues},
+        else: collect_timeout(call, macros, min_timeout, issue_meta, issues)
     end)
   end
+
+  defp collect_timeout({_, name, meta, args}, macros, min_timeout, issue_meta, issues) do
+    if name in macros and not String.starts_with?(Atom.to_string(name), "refute_") and
+         short?(timeout(name, args), min_timeout) do
+      [timeout_issue(issue_meta, name, meta, min_timeout) | issues]
+    else
+      issues
+    end
+  end
+
+  defp collect_timeout(_call, _macros, _min_timeout, _issue_meta, issues), do: issues
+
+  # A zero-timeout navigation assertion expected to raise is a negative check.
+  defp negative_live_navigation?({module, :assert_raise, _, [exception | args]}, scope)
+       when module in [:local, [:ExUnit, :Assertions]] do
+    Source.module_name(exception, scope) == [:ArgumentError] and
+      zero_navigation_callback?(List.last(args), scope)
+  end
+
+  defp negative_live_navigation?(_call, _scope), do: false
+
+  defp zero_navigation_callback?({:fn, _, [{:->, _, [[], body]}]}, scope) do
+    case Source.call(body, scope) do
+      {module, name, _, args}
+      when module in [:local, [:Phoenix, :LiveViewTest]] and
+             name in [:assert_patch, :assert_redirect] ->
+        timeout(name, args) == 0
+
+      _ ->
+        false
+    end
+  end
+
+  defp zero_navigation_callback?(_callback, _scope), do: false
 
   defp timeout(:assert_receive, [_, timeout]), do: timeout
   defp timeout(:assert_receive, [_, timeout, _message]), do: timeout

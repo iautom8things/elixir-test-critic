@@ -9,6 +9,7 @@ defmodule TestCritic.Credo.Check.ProcessSleepInTest do
       check: """
       ETC-CORE-005: Wait on a message, monitor the process, or poll with a deadline.
       For a deliberate sleep, use a Credo disable comment and write the reason.
+      A literal :infinity is treated as a deliberate block.
       """,
       params: [excluded_paths: "Test paths to skip, relative to the Mix project."]
     ]
@@ -27,7 +28,8 @@ defmodule TestCritic.Credo.Check.ProcessSleepInTest do
 
   defp find_sleep(node, scope, issues, issue_meta) do
     case Source.call(node, scope) do
-      {module, :sleep, meta, [_duration]} when module in [[:Process], :timer] ->
+      {module, :sleep, meta, [duration]}
+      when module in [[:Process], :timer] and duration != :infinity ->
         issue =
           format_issue(issue_meta,
             message:

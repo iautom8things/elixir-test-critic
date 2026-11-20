@@ -8,7 +8,7 @@ defmodule TestCritic.Credo.Check.TrivialAssertion do
       check: """
       ETC-CORE-013: Assert an observable result from the code under test.
       A comparison of constants or a value with itself can pass even when
-      the behavior is broken.
+      the behavior is broken. Separate function calls can produce different values.
       """
     ]
 
@@ -49,13 +49,22 @@ defmodule TestCritic.Credo.Check.TrivialAssertion do
 
   defp trivial?(name, {operator, _, [left, right]}) when operator in @comparisons do
     (literal?(left) and literal?(right)) or
-      (name == :assert and operator in [:==, :===] and without_meta(left) === without_meta(right))
+      (name == :assert and operator in [:==, :===] and
+         reference?(left) and reference?(right) and without_meta(left) === without_meta(right))
   end
 
   defp trivial?(_name, _expression), do: false
 
   defp literal?({sign, _, [number]}) when sign in [:+, :-] and is_number(number), do: true
   defp literal?(expression), do: Macro.quoted_literal?(expression)
+
+  defp reference?({:@, _, [{name, _, context}]}) when is_atom(name) and is_atom(context), do: true
+  defp reference?({name, _, context}) when is_atom(name) and is_atom(context), do: true
+
+  defp reference?({{:., _, [receiver, field]}, meta, []}) when is_atom(field),
+    do: meta[:no_parens] == true and reference?(receiver)
+
+  defp reference?(_expression), do: false
 
   defp without_meta(ast), do: Macro.prewalk(ast, &Macro.update_meta(&1, fn _ -> [] end))
 end

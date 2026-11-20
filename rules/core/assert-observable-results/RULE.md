@@ -24,7 +24,7 @@ An assertion about a constant or a value compared with itself can pass even when
 
 ## Detection
 
-Look for `assert true`, identical sides of an equality assertion, `assert is_atom(SomeModule)`, and comparisons between two literals.
+Look for `assert true`, a variable or field compared with itself, `assert is_atom(SomeModule)`, and comparisons between two literals. Two calls can produce different results even when they take the same arguments.
 
 ## Bad
 
