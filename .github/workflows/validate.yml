@@ -48,6 +48,12 @@ jobs:
       - name: Run strict Credo on check code
         run: mix credo --strict 'lib/test_critic/credo/**/*.ex'
 
+      - name: Build Hex package and documentation
+        if: matrix.elixir == '1.18'
+        run: |
+          mix hex.build --unpack --output "$RUNNER_TEMP/test_critic"
+          mix docs --warnings-as-errors
+
       - name: Validate rules
         run: mix validate_rules
 

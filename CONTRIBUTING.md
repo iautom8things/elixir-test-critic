@@ -101,3 +101,16 @@ Open a GitHub issue for:
 
 By contributing, you agree that your contributions are licensed under the
 [MIT License](LICENSE).
+
+## Releasing
+
+1. Update the version in `mix.exs`, the Hex example in the README, and the
+   versions in both `.claude-plugin/plugin.json` and
+   `.claude-plugin/marketplace.json` in the same commit.
+2. Run `make all`, `mix docs --warnings-as-errors`, `mix hex.build --unpack`,
+   and `mix hex.publish --dry-run`. Inspect the unpacked files and run the
+   checks in a scratch consumer before merging the release PR.
+3. From the clean, merged commit, run `mix hex.publish`. Verify that Hex
+   lists the release and HexDocs shows the checks.
+4. Tag that commit with `git tag vX.Y.Z` and push the tag with
+   `git push origin vX.Y.Z`, replacing `X.Y.Z` with the published version.

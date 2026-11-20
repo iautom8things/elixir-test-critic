@@ -6,3 +6,4 @@
 *.ez
 erl_crash.dump
 /tmp/
+/doc/

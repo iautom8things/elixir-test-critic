@@ -1,6 +1,6 @@
 # Elixir Test Critic
 
-[![CI](https://github.com/iautom8things/elixir-test-critic/actions/workflows/validate.yml/badge.svg)](https://github.com/iautom8things/elixir-test-critic/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/iautom8things/elixir-test-critic/actions/workflows/validate.yml/badge.svg)](https://github.com/iautom8things/elixir-test-critic/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/iautom8things/elixir-test-critic/blob/main/LICENSE)
 
 Elixir testing rules that actually run.
 
@@ -55,21 +55,23 @@ for the condensed catalog, or browse [`rules/`][rules] directly.
 
 ## Credo checks
 
-Add Test Critic next to your Credo dependency in `mix.exs`. Keep your existing
-Credo declaration if it resolves to 1.7.x. Replace `<reviewed-commit-sha>` with
-the commit you reviewed so updates to the lint gate are deliberate.
+Add the Hex package next to your Credo dependency in `mix.exs`.
 
 ```elixir
 defp deps do
   [
     {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-    {:test_critic,
-     github: "iautom8things/elixir-test-critic",
-     ref: "<reviewed-commit-sha>",
-     only: [:dev, :test],
-     runtime: false}
+    {:test_critic, "~> 0.4.0", only: [:dev, :test], runtime: false}
   ]
 end
+```
+
+For an unreleased change, replace the `:test_critic` entry with a GitHub
+dependency pinned to the commit you reviewed.
+
+```elixir
+{:test_critic, github: "iautom8things/elixir-test-critic",
+ ref: "<reviewed-commit-sha>", only: [:dev, :test], runtime: false}
 ```
 
 Use `checks.extra` for the test checks so Credo keeps its defaults. Credo 1.7
@@ -116,13 +118,13 @@ umbrella apps and files scanned by absolute path.
 
 | Check | Rule | Check-specific options |
 |-------|------|------------------------|
-| `NondeterministicConfig` | [ETC-ORG-006](rules/organization/deterministic-build-config/RULE.md) | None |
-| `AsyncGlobalState` | [ETC-ISO-001](rules/isolation/no-app-put-env-async/RULE.md), [ETC-ISO-003](rules/isolation/no-shared-ets-async/RULE.md) | None |
-| `UnverifiedMoxExpect` | [ETC-MOCK-004](rules/mocking/verify-on-exit/RULE.md) | `verifying_case_templates: []`. List modules whose setup verifies Mox for every test, such as `[MyApp.DataCase]`. |
-| `ShortReceiveTimeout` | [ETC-CORE-012](rules/core/receive-timeout-budget/RULE.md) | `min_timeout: 500` ms. `macros: [:assert_receive, :assert_push, :assert_reply, :assert_broadcast, :assert_redirect, :assert_patch, :render_async]`. Custom names take the timeout as their last argument. In `test/test_helper.exs`, the check warns when it can determine that `assert_receive_timeout` is missing or below the same minimum. Set `require_configured_default: false` to turn off the helper check. |
-| `ProcessSleepInTest` | [ETC-CORE-005](rules/core/no-process-sleep/RULE.md) | `scope: :test_flow` covers test flow and helpers that only sleep. Use `scope: :all` to include sleeps elsewhere. `excluded_paths: ["test/support"]` is relative to each Mix project. Set it to `[]` to include support code. |
-| `TrivialAssertion` | [ETC-CORE-013](rules/core/assert-observable-results/RULE.md) | None |
-| `NamedProcessOutsideSupervision` | [ETC-CORE-006](rules/core/start-supervised/RULE.md) | None |
+| `NondeterministicConfig` | [ETC-ORG-006](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/organization/deterministic-build-config/RULE.md) | None |
+| `AsyncGlobalState` | [ETC-ISO-001](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/isolation/no-app-put-env-async/RULE.md), [ETC-ISO-003](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/isolation/no-shared-ets-async/RULE.md) | None |
+| `UnverifiedMoxExpect` | [ETC-MOCK-004](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/mocking/verify-on-exit/RULE.md) | `verifying_case_templates: []`. List modules whose setup verifies Mox for every test, such as `[MyApp.DataCase]`. |
+| `ShortReceiveTimeout` | [ETC-CORE-012](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/core/receive-timeout-budget/RULE.md) | `min_timeout: 500` ms. `macros: [:assert_receive, :assert_push, :assert_reply, :assert_broadcast, :assert_redirect, :assert_patch, :render_async]`. Custom names take the timeout as their last argument. In `test/test_helper.exs`, the check warns when it can determine that `assert_receive_timeout` is missing or below the same minimum. Set `require_configured_default: false` to turn off the helper check. |
+| `ProcessSleepInTest` | [ETC-CORE-005](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/core/no-process-sleep/RULE.md) | `scope: :test_flow` covers test flow and helpers that only sleep. Use `scope: :all` to include sleeps elsewhere. `excluded_paths: ["test/support"]` is relative to each Mix project. Set it to `[]` to include support code. |
+| `TrivialAssertion` | [ETC-CORE-013](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/core/assert-observable-results/RULE.md) | None |
+| `NamedProcessOutsideSupervision` | [ETC-CORE-006](https://github.com/iautom8things/elixir-test-critic/blob/main/rules/core/start-supervised/RULE.md) | None |
 
 For an intentional exception, give the reason on its own comment line and put
 Credo's directive immediately before the reported line.
@@ -194,7 +196,7 @@ from a bare Elixir install via `Mix.install/1`.
 
 ## How the corpus stays honest
 
-**Every rule is executable.** `mix check_rules` runs all 176 example scripts
+**Every rule is executable.** The [catalog check task][check-rules] runs all 176 example scripts
 on every push. A regression against a new Elixir release, a dependency bump,
 or an OTP change breaks the build.
 
@@ -257,7 +259,7 @@ mix test                                 # mix tasks and Credo checks
 
 `make all` runs validate → test → generate → check in sequence.
 
-> **A note on `mix check_rules`**: it executes every example as a subprocess
+> The catalog check task executes every example as a subprocess
 > (`elixir <script>`), and the scripts use `Mix.install/1` to pull their own
 > dependencies. The task exists to prove the examples actually behave as their
 > rule claims. Only run it against a rule tree you trust (this repo, or a fork
@@ -272,10 +274,11 @@ See [`CONTRIBUTING.md`][contributing] for how to propose a new rule and
 MIT — see [`LICENSE`][license].
 
 [cc]: https://docs.claude.com/en/docs/claude-code
-[toc]: toc/RULES_REFERENCE.md
-[rules]: rules/
-[config]: docs/CONFIG.md
-[principles]: rules/00-principles.md
-[contributing]: CONTRIBUTING.md
-[rule-structure]: docs/RULE_STRUCTURE.md
-[license]: LICENSE
+[toc]: https://github.com/iautom8things/elixir-test-critic/blob/main/toc/RULES_REFERENCE.md
+[rules]: https://github.com/iautom8things/elixir-test-critic/tree/main/rules/
+[config]: https://github.com/iautom8things/elixir-test-critic/blob/main/docs/CONFIG.md
+[principles]: https://github.com/iautom8things/elixir-test-critic/blob/main/rules/00-principles.md
+[contributing]: https://github.com/iautom8things/elixir-test-critic/blob/main/CONTRIBUTING.md
+[rule-structure]: https://github.com/iautom8things/elixir-test-critic/blob/main/docs/RULE_STRUCTURE.md
+[license]: https://github.com/iautom8things/elixir-test-critic/blob/main/LICENSE
+[check-rules]: https://github.com/iautom8things/elixir-test-critic/blob/main/lib/mix/tasks/check_rules.ex
