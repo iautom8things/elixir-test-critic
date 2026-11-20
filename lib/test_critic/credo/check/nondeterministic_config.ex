@@ -18,7 +18,11 @@ defmodule TestCritic.Credo.Check.NondeterministicConfig do
     {[:DateTime], :utc_now},
     {[:NaiveDateTime], :utc_now},
     {[:Date], :utc_today},
+    {[:Ecto, :UUID], :generate},
     {:crypto, :strong_rand_bytes},
+    {:erlang, :unique_integer},
+    {:erlang, :make_ref},
+    {:os, :system_time},
     {[:Kernel], :make_ref},
     {:local, :make_ref}
   ]
@@ -32,10 +36,8 @@ defmodule TestCritic.Credo.Check.NondeterministicConfig do
     issue_meta = IssueMeta.for(source_file, params)
 
     Source.reduce(source_file, [], fn node, scope, issues ->
-      case Source.call(node, scope) do
-        {module, name, meta, _args}
-        when {module, name} in @calls or module == :rand or
-               (module == [:System] and name in @system_functions) ->
+      case nondeterministic_call(Source.call(node, scope), scope) do
+        {name, meta} ->
           issue =
             format_issue(issue_meta,
               message:
@@ -52,4 +54,16 @@ defmodule TestCritic.Credo.Check.NondeterministicConfig do
       end
     end)
   end
+
+  defp nondeterministic_call({module, name, meta, _args}, _scope)
+       when {module, name} in @calls or module == :rand or
+              (module == [:System] and name in @system_functions),
+       do: {name, meta}
+
+  defp nondeterministic_call({:local, name, meta, args}, scope) when name in @system_functions do
+    if length(args) in [0, 1] and Source.imported?(scope, [:System], name, length(args)),
+      do: {name, meta}
+  end
+
+  defp nondeterministic_call(_call, _scope), do: nil
 end

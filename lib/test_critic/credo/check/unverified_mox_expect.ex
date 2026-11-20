@@ -17,13 +17,17 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
       ]
     ]
 
-  @impl Credo.Check
-  def run(source_file, params) do
-    templates =
-      params
-      |> Params.get(:verifying_case_templates, __MODULE__)
-      |> Enum.map(&Module.split/1)
+  use TestCritic.Credo.Options, verifying_case_templates: {:list, :module}
 
+  defp analyze(source_file, params, options) do
+    if Source.test_file?(source_file) and not Source.test_support_file?(source_file) do
+      issues(source_file, params, Enum.map(options.verifying_case_templates, &Module.split/1))
+    else
+      []
+    end
+  end
+
+  defp issues(source_file, params, templates) do
     issue_meta = IssueMeta.for(source_file, params)
 
     Source.reduce(source_file, [], fn
@@ -36,7 +40,8 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
             issue =
               format_issue(issue_meta,
                 message:
-                  "Register Mox.verify_on_exit! in setup or in the test so ExUnit checks every expectation.",
+                  "Register Mox.verify_on_exit! in setup or in the test. " <>
+                    "List case templates that already verify under verifying_case_templates.",
                 trigger: "expect",
                 line_no: meta[:line],
                 column: meta[:column]
@@ -107,7 +112,8 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
   defp collect_helper({:when, _, [head | _guards]}, body, scope, helpers),
     do: collect_helper(head, body, scope, helpers)
 
-  defp collect_helper({name, _, args}, body, scope, helpers) when is_atom(name) do
+  defp collect_helper({name, _, args}, body, scope, helpers)
+       when is_atom(name) and (is_list(args) or is_nil(args)) do
     args = args || []
     max_arity = length(args)
     default_count = Enum.count(args, &match?({:\\, _, _}, &1))
@@ -119,9 +125,11 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
     end)
   end
 
+  defp collect_helper(_head, _body, _scope, helpers), do: helpers
+
   defp directly_verifies?([do: body], scope) do
-    Source.reduce(body, scope, false, fn node, scope, verified? ->
-      {:skip, verified? or verification_call?(node, scope)}
+    Source.reduce_statements(body, scope, false, fn node, scope, verified? ->
+      verified? or verifies?(node, scope, [:verify!, :verify_on_exit!])
     end)
   end
 
@@ -185,19 +193,50 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
         {:skip, verified?}
 
       node, scope, verified? ->
-        verified? or verification_call?(node, scope)
+        verified? or verifies?(node, scope, [:verify_on_exit!])
     end)
   end
 
-  defp verification_call?(node, scope) do
+  defp verifies?(node, scope, functions) do
     case Source.call(node, scope) do
-      {module, :verify_on_exit!, _, args} when length(args) in [0, 1] ->
-        mox_call?(module, :verify_on_exit!, args, scope)
+      {module, name, _, args} when length(args) in [0, 1] ->
+        (name in functions and mox_call?(module, name, args, scope)) or
+          verifies_on_exit?(module, name, args, scope)
+
+      {module, :on_exit, _, [_name, callback]} ->
+        verifies_on_exit?(module, :on_exit, [callback], scope)
 
       _ ->
         false
     end
   end
+
+  defp verifies_on_exit?(module, :on_exit, [callback], scope)
+       when module in [:local, [:ExUnit, :Callbacks]],
+       do: verifying_callback_term?(callback, scope)
+
+  defp verifies_on_exit?(_module, _name, _args, _scope), do: false
+
+  defp verifying_callback_term?({:fn, _, [{:->, _, [[], body]}]}, scope) do
+    Source.reduce_statements(body, scope, false, fn node, scope, verified? ->
+      verified? or verifies?(node, scope, [:verify!])
+    end)
+  end
+
+  defp verifying_callback_term?({:&, _, [{:/, _, [function, 0]}]}, scope) do
+    case function do
+      {{:., _, [receiver, :verify!]}, _, _} ->
+        Source.module_name(receiver, scope) == [:Mox]
+
+      {:verify!, _, _} ->
+        Source.imported?(scope, [:Mox], :verify!, 0)
+
+      _ ->
+        false
+    end
+  end
+
+  defp verifying_callback_term?(_callback, _scope), do: false
 
   defp mox_call?([:Mox], _name, _args, _scope), do: true
 

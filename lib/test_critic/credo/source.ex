@@ -3,23 +3,30 @@ defmodule TestCritic.Credo.Source do
 
   alias Credo.SourceFile
 
-  def test_file?(%SourceFile{filename: filename}) do
+  def test_file?(%SourceFile{status: :valid, filename: filename}) when is_binary(filename) do
     String.ends_with?(Path.basename(filename), "_test.exs") and
       "test" in path_parts(Path.dirname(filename))
   end
 
-  def test_helper?(%SourceFile{filename: filename}) do
+  def test_file?(_source), do: false
+
+  def test_helper?(%SourceFile{status: :valid, filename: filename}) when is_binary(filename) do
     match?(["test_helper.exs", "test" | _], filename |> path_parts() |> Enum.reverse())
   end
 
+  def test_helper?(_source), do: false
+
   def test_support_file?(source), do: test_path_matches?(source, "test/support")
 
-  def test_path_matches?(%SourceFile{filename: filename}, path) do
+  def test_path_matches?(%SourceFile{status: :valid, filename: filename}, path)
+      when is_binary(filename) and is_binary(path) do
     parts = path_parts(filename)
     prefix = path_parts(path)
 
     List.starts_with?(parts, prefix) or test_subpath_matches?(parts, prefix)
   end
+
+  def test_path_matches?(_source, _path), do: false
 
   defp test_subpath_matches?(["test" | rest] = parts, prefix),
     do: List.starts_with?(parts, prefix) or test_subpath_matches?(rest, prefix)
@@ -27,7 +34,8 @@ defmodule TestCritic.Credo.Source do
   defp test_subpath_matches?([_ | rest], prefix), do: test_subpath_matches?(rest, prefix)
   defp test_subpath_matches?([], _prefix), do: false
 
-  def build_config_file?(%SourceFile{filename: filename}) do
+  def build_config_file?(%SourceFile{status: :valid, filename: filename})
+      when is_binary(filename) do
     case filename |> path_parts() |> Enum.reverse() do
       [name, "config" | project] when name != "runtime.exs" ->
         Path.extname(name) == ".exs" and config_project_root?(project)
@@ -36,6 +44,8 @@ defmodule TestCritic.Credo.Source do
         false
     end
   end
+
+  def build_config_file?(_source), do: false
 
   defp config_project_root?([]), do: true
   defp config_project_root?([_app, "apps"]), do: true
@@ -65,12 +75,14 @@ defmodule TestCritic.Credo.Source do
   defp path_parts(path),
     do: path |> Path.relative_to_cwd() |> Path.split() |> Enum.reject(&(&1 == "."))
 
-  def expressions({:__block__, _, expressions}), do: expressions
+  def expressions({:__block__, _, expressions}) when is_list(expressions), do: expressions
   def expressions(expression), do: [expression]
 
-  def reduce(%SourceFile{} = source, acc, visit) do
+  def reduce(%SourceFile{status: :valid} = source, acc, visit) do
     reduce(SourceFile.ast(source), %{aliases: %{}, imports: %{}}, acc, visit)
   end
+
+  def reduce(%SourceFile{}, acc, _visit), do: acc
 
   def reduce(ast, scope, acc, visit) do
     {_scope, acc} = walk(ast, scope, acc, visit)
@@ -102,20 +114,34 @@ defmodule TestCritic.Credo.Source do
 
   def imported?(scope, module, name, arity) do
     case Map.fetch(scope.imports, module) do
-      {:ok, [only: functions]} when is_list(functions) -> {name, arity} in functions
-      {:ok, [except: functions]} when is_list(functions) -> {name, arity} not in functions
-      {:ok, [only: :macros]} -> false
-      {:ok, _opts} -> true
-      :error -> false
+      {:ok, opts} when is_list(opts) -> imported_function?(opts, {name, arity})
+      _ -> false
+    end
+  end
+
+  defp imported_function?(opts, signature) do
+    if Keyword.keyword?(opts) do
+      case {Keyword.get(opts, :only), Keyword.get(opts, :except, [])} do
+        {only, _} when is_list(only) ->
+          signature in only
+
+        {only, except} when only in [nil, :functions] and is_list(except) ->
+          signature not in except
+
+        _ ->
+          false
+      end
+    else
+      false
     end
   end
 
   def call({{:., _, [receiver, name]}, meta, args}, scope)
-      when is_atom(name) and is_list(args) do
+      when is_atom(name) and is_list(meta) and is_list(args) do
     {module_name(receiver, scope), name, meta, args}
   end
 
-  def call({name, meta, args}, _scope) when is_atom(name) and is_list(args) do
+  def call({name, meta, args}, _scope) when is_atom(name) and is_list(meta) and is_list(args) do
     {:local, name, meta, args}
   end
 
@@ -127,7 +153,7 @@ defmodule TestCritic.Credo.Source do
        when is_integer(arity),
        do: {scope, visit_node(node, scope, acc, visit)}
 
-  defp walk({:__block__, _, expressions}, scope, acc, visit) do
+  defp walk({:__block__, _, expressions}, scope, acc, visit) when is_list(expressions) do
     Enum.reduce(expressions, {scope, acc}, fn expression, {scope, acc} ->
       walk(expression, scope, acc, visit)
     end)
@@ -175,7 +201,8 @@ defmodule TestCritic.Credo.Source do
     end
   end
 
-  defp update_scope(:alias, [{{:., _, [base, :{}]}, _, children}], scope) do
+  defp update_scope(:alias, [{{:., _, [base, :{}]}, _, children}], scope)
+       when is_list(children) do
     case module_name(base, scope) do
       base when is_list(base) ->
         Enum.reduce(children, scope, fn

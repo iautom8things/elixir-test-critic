@@ -314,16 +314,15 @@ defmodule TestCritic.Credo.ChecksTest do
     |> assert_issue(%{line_no: 2, message: ~r/100 ms/})
   end
 
-  test "receive timeout only requires the suite default when opted in" do
-    opts = [require_configured_default: true]
+  test "receive timeout requires the suite default unless opted out" do
     helper = "test/test_helper.exs"
     check = Check.ShortReceiveTimeout
 
-    refute_issues(run("ExUnit.start()", check, helper))
+    refute_issues(run("ExUnit.start()", check, helper, require_configured_default: false))
 
     for prefix <- @project_prefixes do
       "ExUnit.start()"
-      |> run(check, prefix <> helper, opts)
+      |> run(check, prefix <> helper)
       |> assert_issue(%{line_no: 1, trigger: "start", message: ~r/assert_receive_timeout/})
     end
 
@@ -331,7 +330,7 @@ defmodule TestCritic.Credo.ChecksTest do
           "ExUnit.start(assert_receive_timeout: 1_000)",
           "ExUnit.configure(assert_receive_timeout: timeout)\nExUnit.start()"
         ] do
-      refute_issues(run(source, check, helper, opts))
+      refute_issues(run(source, check, helper))
     end
   end
 
@@ -401,7 +400,7 @@ defmodule TestCritic.Credo.ChecksTest do
     end
   end
 
-  test "only all scope reports finite sleeps in helpers, callbacks and nested arguments" do
+  test "only all scope reports finite sleeps in callbacks and other expressions" do
     source = """
     Process.sleep(10)
     def helper, do: Process.sleep(10)
@@ -421,7 +420,9 @@ defmodule TestCritic.Credo.ChecksTest do
     end
     """
 
-    refute_issues(run(source, Check.ProcessSleepInTest))
+    source
+    |> run(Check.ProcessSleepInTest)
+    |> assert_issues_match([%{line_no: 2}, %{line_no: 3}])
 
     source
     |> run(Check.ProcessSleepInTest, @test_file, scope: :all)
