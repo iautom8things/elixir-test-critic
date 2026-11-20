@@ -1,4 +1,4 @@
-defmodule TestCritic.RuleParser do
+defmodule Shampoo.RuleParser do
   @moduledoc false
 
   @required_fields ~w(id title category severity summary principles applies_when)

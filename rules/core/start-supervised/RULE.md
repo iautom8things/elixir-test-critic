@@ -20,7 +20,7 @@ applies_when:
 does_not_apply_when:
   - "Testing the start_link function itself — you need the raw result to assert on the pid/error"
   - "Testing process registration under specific names — start_supervised may conflict with name registration tests"
-enforced_by: credo:TestCritic.Credo.Check.NamedProcessOutsideSupervision
+enforced_by: credo:Shampoo.Check.NamedProcessOutsideSupervision
 ---
 
 # Use start_supervised for process cleanup

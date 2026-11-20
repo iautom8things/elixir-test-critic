@@ -1,7 +1,7 @@
-defmodule TestCritic.TocGeneratorTest do
+defmodule Shampoo.TocGeneratorTest do
   use ExUnit.Case
 
-  alias TestCritic.TocGenerator
+  alias Shampoo.TocGenerator
 
   @fixture_dir "test/fixtures/toc_gen"
   @template_path "templates/toc_template.md.eex"
@@ -72,7 +72,7 @@ defmodule TestCritic.TocGeneratorTest do
   test "shows Credo enforcement next to the linked rule" do
     rule_path = Path.join([@fixture_dir, "core", "test-rule", "RULE.md"])
     [start, frontmatter, body] = String.split(File.read!(rule_path), "---", parts: 3)
-    check = "credo:TestCritic.Credo.Check.ProcessSleepInTest"
+    check = "credo:Shampoo.Check.ProcessSleepInTest"
     File.write!(rule_path, [start, "---", frontmatter, "enforced_by: ", check, "\n---", body])
 
     assert {:ok, path} = TocGenerator.generate(@fixture_dir, @template_path, @output_path)

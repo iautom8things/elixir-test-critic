@@ -1,5 +1,5 @@
-defmodule TestCritic.Credo.Check.ProcessSleepInTest do
-  alias TestCritic.Credo.Source
+defmodule Shampoo.Check.ProcessSleepInTest do
+  alias Shampoo.Check.Source
 
   use Credo.Check,
     base_priority: :high,
@@ -35,7 +35,7 @@ defmodule TestCritic.Credo.Check.ProcessSleepInTest do
   @inline_blocks [:case, :cond, :for, :if, :receive, :try, :unless, :with]
   @branch_keys [:do, :else, :rescue, :catch, :after]
 
-  use TestCritic.Credo.Options,
+  use Shampoo.Check.Options,
     scope: {:one_of, [:test_flow, :all]},
     excluded_paths: {:list, :path}
 

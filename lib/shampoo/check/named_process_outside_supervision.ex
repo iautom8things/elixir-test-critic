@@ -1,5 +1,5 @@
-defmodule TestCritic.Credo.Check.NamedProcessOutsideSupervision do
-  alias TestCritic.Credo.Source
+defmodule Shampoo.Check.NamedProcessOutsideSupervision do
+  alias Shampoo.Check.Source
 
   use Credo.Check,
     base_priority: :high,

@@ -11,7 +11,7 @@ defmodule UseTmpDirBadTest do
 
   test "writes and reads a file to hardcoded path" do
     # Wrong: hardcoded path — conflicts with any other test using the same path
-    path = "/tmp/elixir_test_critic_bad_example.txt"
+    path = "/tmp/shampoo_bad_example.txt"
     on_exit(fn -> File.rm(path) end)
 
     File.write!(path, "hello world")

@@ -3,9 +3,9 @@ Mix.install([:ecto_sql, :ecto_sqlite3])
 Code.require_file("../../_support/db.exs", __DIR__)
 
 # Create the table and unique index inline (SQLite)
-Ecto.Adapters.SQL.Sandbox.checkout(TestCritic.Repo)
-Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
-  TestCritic.Repo.query!("""
+Ecto.Adapters.SQL.Sandbox.checkout(Shampoo.Repo)
+Ecto.Adapters.SQL.Sandbox.unboxed_run(Shampoo.Repo, fn ->
+  Shampoo.Repo.query!("""
   CREATE TABLE IF NOT EXISTS constraint_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL,
@@ -14,11 +14,11 @@ Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
     updated_at TEXT NOT NULL
   )
   """)
-  TestCritic.Repo.query!(
+  Shampoo.Repo.query!(
     "CREATE UNIQUE INDEX IF NOT EXISTS constraint_users_email_index ON constraint_users (email)"
   )
 end)
-Ecto.Adapters.SQL.Sandbox.checkin(TestCritic.Repo)
+Ecto.Adapters.SQL.Sandbox.checkin(Shampoo.Repo)
 
 ExUnit.start(autorun: false)
 
@@ -43,7 +43,7 @@ end
 defmodule ConstraintNeedsDbGoodTest do
   use ExUnit.Case, async: false
 
-  alias TestCritic.Repo
+  alias Shampoo.Repo
   alias ConstraintNeedsDb.User
 
   setup do

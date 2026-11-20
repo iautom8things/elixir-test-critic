@@ -1,5 +1,5 @@
-defmodule TestCritic.Credo.Check.TrivialAssertion do
-  alias TestCritic.Credo.Source
+defmodule Shampoo.Check.TrivialAssertion do
+  alias Shampoo.Check.Source
 
   use Credo.Check,
     base_priority: :high,

@@ -1,7 +1,7 @@
-defmodule TestCritic.ValidatorTest do
+defmodule Shampoo.ValidatorTest do
   use ExUnit.Case
 
-  alias TestCritic.Validator
+  alias Shampoo.Validator
 
   @fixture_dir "test/fixtures/validator"
 
@@ -20,7 +20,7 @@ defmodule TestCritic.ValidatorTest do
     test "accepts an existing Credo check as enforced_by" do
       write_rule!("core", "test-rule",
         id: "ETC-CORE-001",
-        enforced_by: "credo:TestCritic.Credo.Check.ProcessSleepInTest"
+        enforced_by: "credo:Shampoo.Check.ProcessSleepInTest"
       )
 
       assert :ok = Validator.validate_all(@fixture_dir)
@@ -29,7 +29,7 @@ defmodule TestCritic.ValidatorTest do
     test "rejects unknown Credo checks" do
       write_rule!("core", "test-rule",
         id: "ETC-CORE-001",
-        enforced_by: "credo:TestCritic.Credo.Check.DoesNotExist"
+        enforced_by: "credo:Shampoo.Check.DoesNotExist"
       )
 
       assert {:error,
@@ -40,8 +40,7 @@ defmodule TestCritic.ValidatorTest do
     test "rejects other enforced_by formats" do
       write_rule!("core", "test-rule", id: "ETC-CORE-001", enforced_by: "credo:OtherCheck")
 
-      assert {:error,
-              ["core/test-rule: enforced_by must use credo:TestCritic.Credo.Check.<Module>"]} =
+      assert {:error, ["core/test-rule: enforced_by must use credo:Shampoo.Check.<Module>"]} =
                Validator.validate_all(@fixture_dir)
     end
 

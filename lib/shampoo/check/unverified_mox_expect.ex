@@ -1,5 +1,5 @@
-defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
-  alias TestCritic.Credo.Source
+defmodule Shampoo.Check.UnverifiedMoxExpect do
+  alias Shampoo.Check.Source
 
   use Credo.Check,
     base_priority: :high,
@@ -17,7 +17,7 @@ defmodule TestCritic.Credo.Check.UnverifiedMoxExpect do
       ]
     ]
 
-  use TestCritic.Credo.Options, verifying_case_templates: {:list, :module}
+  use Shampoo.Check.Options, verifying_case_templates: {:list, :module}
 
   defp analyze(source_file, params, options) do
     if Source.test_file?(source_file) and not Source.test_support_file?(source_file) do

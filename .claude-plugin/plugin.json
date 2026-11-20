@@ -1,11 +1,11 @@
 {
   "name": "elixir-test-critic",
-  "version": "0.3.0",
-  "description": "Elixir/ExUnit test quality expert backed by 85 curated testing rules grounded in Elixir community testing philosophy.",
+  "version": "0.4.0",
+  "description": "Elixir/ExUnit test quality expert backed by 88 curated testing rules grounded in Elixir community testing philosophy.",
   "author": {
     "name": "Manuel Zubieta"
   },
-  "homepage": "https://github.com/iautom8things/elixir-test-critic",
+  "homepage": "https://github.com/iautom8things/shampoo",
   "license": "MIT",
   "keywords": [
     "elixir",

@@ -1,7 +1,7 @@
-defmodule TestCritic.TocGenerator do
+defmodule Shampoo.TocGenerator do
   @moduledoc false
 
-  alias TestCritic.RuleParser
+  alias Shampoo.RuleParser
 
   @category_descriptions %{
     "core" => "Fundamental ExUnit patterns every Elixir test should follow",

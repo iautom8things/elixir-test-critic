@@ -1,5 +1,5 @@
-defmodule TestCritic.Credo.Check.AsyncGlobalState do
-  alias TestCritic.Credo.Source
+defmodule Shampoo.Check.AsyncGlobalState do
+  alias Shampoo.Check.Source
 
   use Credo.Check,
     base_priority: :high,

@@ -1,5 +1,5 @@
-defmodule TestCritic.Credo.Check.ShortReceiveTimeout do
-  alias TestCritic.Credo.Source
+defmodule Shampoo.Check.ShortReceiveTimeout do
+  alias Shampoo.Check.Source
 
   @default_macros [
     :assert_receive,
@@ -31,7 +31,7 @@ defmodule TestCritic.Credo.Check.ShortReceiveTimeout do
       ]
     ]
 
-  use TestCritic.Credo.Options,
+  use Shampoo.Check.Options,
     min_timeout: :nonnegative_integer,
     macros: {:list, :atom},
     require_configured_default: :boolean

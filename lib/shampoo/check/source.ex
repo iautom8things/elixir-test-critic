@@ -1,4 +1,4 @@
-defmodule TestCritic.Credo.Source do
+defmodule Shampoo.Check.Source do
   @moduledoc false
 
   alias Credo.SourceFile

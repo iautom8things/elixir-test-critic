@@ -1,7 +1,7 @@
-defmodule TestCritic.Credo.ReviewRegressionTest do
+defmodule Shampoo.Check.ReviewRegressionTest do
   use Credo.Test.Case
 
-  alias TestCritic.Credo.Check
+  alias Shampoo.Check
 
   @checks [
     Check.AsyncGlobalState,

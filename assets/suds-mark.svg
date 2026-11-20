@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="t d">
+  <title id="t">Suds mark</title>
+  <desc id="d">Small Shampoo mark: Suds, the purple drop bottle with an orange pump on its tilted tip and a confident smile.</desc>
+  <!-- scaled to 90% so a circular avatar crop keeps the pump; widths compensate to draw 3 units -->
+  <g transform="translate(32 32.5) scale(0.9) translate(-32 -32)" stroke="#3b1f7a" stroke-width="3.33" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M36.8 12.7 C38.1 19.6 49.4 29.7 49.4 42.9 C49.4 53.8 41.8 61 32 61 C22.2 61 14.6 53.8 14.6 42.9 C14.6 30.3 30.9 21.8 36.8 12.7 Z" fill="#7048cc"/>
+    <g transform="translate(36.8 12.7) rotate(10)">
+      <rect x="-5" y="-1.5" width="10.5" height="7" rx="2" fill="#f7a12f"/>
+      <g transform="translate(0.5 -4.5) rotate(-12)">
+        <g fill="#3b1f7a" stroke-width="6.67">
+          <rect x="-4.5" y="-5.5" width="9.5" height="5.5" rx="1.8"/>
+          <rect x="-9.5" y="-5" width="6" height="2.6"/>
+          <rect x="-9.5" y="-5" width="2.6" height="4.2"/>
+        </g>
+        <g fill="#f7a12f" stroke="none">
+          <rect x="-4.5" y="-5.5" width="9.5" height="5.5" rx="1.8"/>
+          <rect x="-9.5" y="-5" width="6" height="2.6"/>
+          <rect x="-9.5" y="-5" width="2.6" height="4.2"/>
+        </g>
+      </g>
+    </g>
+    <g stroke="none" fill="#3b1f7a">
+      <ellipse cx="27.2" cy="41.2" rx="3" ry="3.9"/>
+      <ellipse cx="37" cy="40.8" rx="3" ry="3.9"/>
+    </g>
+    <g stroke="none" fill="#fff">
+      <circle cx="28.1" cy="39.9" r="0.95"/>
+      <circle cx="37.9" cy="39.5" r="0.95"/>
+    </g>
+    <path d="M29.8 48 Q33.4 50.4 36.8 46.6" fill="none" stroke-width="2.44"/>
+  </g>
+</svg>

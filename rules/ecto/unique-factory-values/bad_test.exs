@@ -7,10 +7,10 @@
 Mix.install([:ecto_sql, :ecto_sqlite3])
 Code.require_file("../../_support/db.exs", __DIR__)
 
-Ecto.Adapters.SQL.Sandbox.checkout(TestCritic.Repo)
+Ecto.Adapters.SQL.Sandbox.checkout(Shampoo.Repo)
 
-Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
-  TestCritic.Repo.query!("""
+Ecto.Adapters.SQL.Sandbox.unboxed_run(Shampoo.Repo, fn ->
+  Shampoo.Repo.query!("""
   CREATE TABLE IF NOT EXISTS bad_factory_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL UNIQUE,
@@ -21,7 +21,7 @@ Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
   """)
 end)
 
-Ecto.Adapters.SQL.Sandbox.checkin(TestCritic.Repo)
+Ecto.Adapters.SQL.Sandbox.checkin(Shampoo.Repo)
 
 ExUnit.start(autorun: false)
 
@@ -44,7 +44,7 @@ defmodule BadFactory.User do
 end
 
 defmodule BadFactory.Fixtures do
-  alias TestCritic.Repo
+  alias Shampoo.Repo
   alias BadFactory.User
 
   # BAD: hardcoded email. A second call in the same test hits the unique index.
@@ -60,7 +60,7 @@ defmodule UniqueFactoryValuesBadTest do
   use ExUnit.Case, async: false
 
   import BadFactory.Fixtures
-  alias TestCritic.Repo
+  alias Shampoo.Repo
 
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)

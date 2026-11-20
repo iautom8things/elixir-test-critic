@@ -6,9 +6,9 @@
 Mix.install([:ecto_sql, :ecto_sqlite3])
 Code.require_file("../../_support/db.exs", __DIR__)
 
-Ecto.Adapters.SQL.Sandbox.checkout(TestCritic.Repo)
-Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
-  TestCritic.Repo.query!("""
+Ecto.Adapters.SQL.Sandbox.checkout(Shampoo.Repo)
+Ecto.Adapters.SQL.Sandbox.unboxed_run(Shampoo.Repo, fn ->
+  Shampoo.Repo.query!("""
   CREATE TABLE IF NOT EXISTS multi_bad_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL,
@@ -17,7 +17,7 @@ Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
   )
   """)
 end)
-Ecto.Adapters.SQL.Sandbox.checkin(TestCritic.Repo)
+Ecto.Adapters.SQL.Sandbox.checkin(Shampoo.Repo)
 
 ExUnit.start(autorun: false)
 
@@ -53,7 +53,7 @@ defmodule MultiUnitTestBadTest do
   use ExUnit.Case, async: false
 
   alias MultiBad.Accounts
-  alias TestCritic.Repo
+  alias Shampoo.Repo
 
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)

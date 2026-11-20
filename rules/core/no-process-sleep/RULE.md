@@ -16,7 +16,7 @@ does_not_apply_when:
   - "Deliberate timing tests for rate limiters or debounce logic where sleep IS the behavior under test"
 related_rules:
   - ETC-TELE-002
-enforced_by: credo:TestCritic.Credo.Check.ProcessSleepInTest
+enforced_by: credo:Shampoo.Check.ProcessSleepInTest
 ---
 
 # Never use Process.sleep for synchronization

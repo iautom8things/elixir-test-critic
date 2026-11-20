@@ -7,11 +7,11 @@
     {
       "name": "elixir-test-critic",
       "source": "./",
-      "description": "Elixir/ExUnit test quality expert backed by 85 curated testing rules grounded in Elixir community testing philosophy.",
-      "version": "0.3.0",
+      "description": "Elixir/ExUnit test quality expert backed by 88 curated testing rules grounded in Elixir community testing philosophy.",
+      "version": "0.4.0",
       "author": { "name": "Manuel Zubieta", "email": "i@autom8things.com" },
-      "homepage": "https://github.com/iautom8things/elixir-test-critic",
-      "repository": "https://github.com/iautom8things/elixir-test-critic",
+      "homepage": "https://github.com/iautom8things/shampoo",
+      "repository": "https://github.com/iautom8things/shampoo",
       "license": "MIT",
       "keywords": ["elixir", "exunit", "testing", "ecto", "phoenix", "liveview", "otp", "mox", "oban", "absinthe", "broadway", "telemetry"],
       "category": "development"

@@ -5,9 +5,9 @@
 Mix.install([:ecto_sql, :ecto_sqlite3])
 Code.require_file("../../_support/db.exs", __DIR__)
 
-:ok = Ecto.Adapters.SQL.Sandbox.checkout(TestCritic.Repo)
-Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
-  TestCritic.Repo.query!("""
+:ok = Ecto.Adapters.SQL.Sandbox.checkout(Shampoo.Repo)
+Ecto.Adapters.SQL.Sandbox.unboxed_run(Shampoo.Repo, fn ->
+  Shampoo.Repo.query!("""
   CREATE TABLE IF NOT EXISTS sandbox_allow_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     label TEXT NOT NULL,
@@ -16,7 +16,7 @@ Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
   )
   """)
 end)
-Ecto.Adapters.SQL.Sandbox.checkin(TestCritic.Repo)
+Ecto.Adapters.SQL.Sandbox.checkin(Shampoo.Repo)
 
 ExUnit.start(autorun: false)
 
@@ -35,7 +35,7 @@ defmodule SandboxAllow.Writer do
   def start_link(_opts), do: Agent.start_link(fn -> nil end)
 
   def write(pid, label) do
-    Agent.get(pid, fn _ -> TestCritic.Repo.insert!(%SandboxAllow.Item{label: label}) end)
+    Agent.get(pid, fn _ -> Shampoo.Repo.insert!(%SandboxAllow.Item{label: label}) end)
   end
 end
 
@@ -44,7 +44,7 @@ defmodule AllowForSpawnedProcessesGoodTest do
 
   alias Ecto.Adapters.SQL.Sandbox
   alias SandboxAllow.{Item, Writer}
-  alias TestCritic.Repo
+  alias Shampoo.Repo
 
   setup do
     :ok = Sandbox.checkout(Repo)

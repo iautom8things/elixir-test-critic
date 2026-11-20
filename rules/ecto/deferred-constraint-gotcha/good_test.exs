@@ -6,9 +6,9 @@
 Mix.install([:ecto_sql, :ecto_sqlite3])
 Code.require_file("../../_support/db.exs", __DIR__)
 
-Ecto.Adapters.SQL.Sandbox.checkout(TestCritic.Repo)
-Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
-  TestCritic.Repo.query!("""
+Ecto.Adapters.SQL.Sandbox.checkout(Shampoo.Repo)
+Ecto.Adapters.SQL.Sandbox.unboxed_run(Shampoo.Repo, fn ->
+  Shampoo.Repo.query!("""
   CREATE TABLE IF NOT EXISTS ordered_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     position INTEGER NOT NULL,
@@ -17,9 +17,9 @@ Ecto.Adapters.SQL.Sandbox.unboxed_run(TestCritic.Repo, fn ->
     updated_at TEXT NOT NULL
   )
   """)
-  TestCritic.Repo.query!("CREATE UNIQUE INDEX IF NOT EXISTS ordered_items_position ON ordered_items (position)")
+  Shampoo.Repo.query!("CREATE UNIQUE INDEX IF NOT EXISTS ordered_items_position ON ordered_items (position)")
 end)
-Ecto.Adapters.SQL.Sandbox.checkin(TestCritic.Repo)
+Ecto.Adapters.SQL.Sandbox.checkin(Shampoo.Repo)
 
 ExUnit.start(autorun: false)
 
@@ -44,7 +44,7 @@ end
 defmodule DeferredConstraintGoodTest do
   use ExUnit.Case, async: false
 
-  alias TestCritic.Repo
+  alias Shampoo.Repo
   alias DeferredConstraint.Item
 
   setup do
