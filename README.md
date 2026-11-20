@@ -119,7 +119,7 @@ umbrella apps and files scanned by absolute path.
 | `NondeterministicConfig` | [ETC-ORG-006](rules/organization/deterministic-build-config/RULE.md) | None |
 | `AsyncGlobalState` | [ETC-ISO-001](rules/isolation/no-app-put-env-async/RULE.md), [ETC-ISO-003](rules/isolation/no-shared-ets-async/RULE.md) | None |
 | `UnverifiedMoxExpect` | [ETC-MOCK-004](rules/mocking/verify-on-exit/RULE.md) | `verifying_case_templates: []`. List modules whose setup verifies Mox for every test, such as `[MyApp.DataCase]`. |
-| `ShortReceiveTimeout` | [ETC-CORE-012](rules/core/receive-timeout-budget/RULE.md) | `min_timeout: 500` ms. `macros: [:assert_receive, :assert_push, :assert_reply, :assert_broadcast, :assert_redirect, :assert_patch, :render_async]`. Custom names take the timeout as their last argument. The check requires `assert_receive_timeout` in `test/test_helper.exs` and checks literal values against the same minimum. Set `require_configured_default: false` to turn off that requirement. |
+| `ShortReceiveTimeout` | [ETC-CORE-012](rules/core/receive-timeout-budget/RULE.md) | `min_timeout: 500` ms. `macros: [:assert_receive, :assert_push, :assert_reply, :assert_broadcast, :assert_redirect, :assert_patch, :render_async]`. Custom names take the timeout as their last argument. In `test/test_helper.exs`, the check warns when it can determine that `assert_receive_timeout` is missing or below the same minimum. Set `require_configured_default: false` to turn off the helper check. |
 | `ProcessSleepInTest` | [ETC-CORE-005](rules/core/no-process-sleep/RULE.md) | `scope: :test_flow` covers test flow and helpers that only sleep. Use `scope: :all` to include sleeps elsewhere. `excluded_paths: ["test/support"]` is relative to each Mix project. Set it to `[]` to include support code. |
 | `TrivialAssertion` | [ETC-CORE-013](rules/core/assert-observable-results/RULE.md) | None |
 | `NamedProcessOutsideSupervision` | [ETC-CORE-006](rules/core/start-supervised/RULE.md) | None |
@@ -137,9 +137,9 @@ These checks inspect one file at a time. Use the [prose rules][toc] to review
 which process sends a message, what a helper in another file does, and what
 depends on runtime state.
 
-The timeout check accepts a computed value passed as `assert_receive_timeout:`.
-If you build the entire options list dynamically, set the timeout in a
-separate `ExUnit.configure/1` call so Credo can see the key.
+The timeout check reads literal keyword options and variables assigned once
+to a literal list or literal lists joined with `++`. It accepts values and
+options that depend on runtime code.
 
 ## What a review looks like
 

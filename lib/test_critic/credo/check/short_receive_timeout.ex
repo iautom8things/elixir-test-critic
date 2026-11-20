@@ -130,12 +130,14 @@ defmodule TestCritic.Credo.Check.ShortReceiveTimeout do
   end
 
   defp helper_issues(source_file, issue_meta, min_timeout) do
-    calls =
-      source_file
-      |> Source.reduce([], &collect_exunit_call/3)
-      |> Enum.sort_by(fn {_name, meta, _args} -> {meta[:line], meta[:column]} end, :desc)
+    {calls, binding_counts} = Source.reduce(source_file, {[], %{}}, &collect_helper_facts/3)
+    bindings = option_bindings(source_file, binding_counts)
+    calls = Enum.sort_by(calls, fn {_name, meta, _args} -> position(meta) end, :desc)
 
-    case Enum.find_value(calls, &configured_timeout/1) do
+    case Enum.find_value(calls, &configured_timeout(&1, bindings)) do
+      :unknown ->
+        []
+
       nil ->
         [default_issue(issue_meta, min_timeout, default_location(List.last(calls), source_file))]
 
@@ -146,30 +148,86 @@ defmodule TestCritic.Credo.Check.ShortReceiveTimeout do
     end
   end
 
-  defp collect_exunit_call({kind, _, _}, _scope, calls)
-       when kind in [:defmodule, :def, :defp, :fn],
-       do: {:skip, calls}
+  defp option_bindings(source_file, binding_counts) do
+    assignments =
+      source_file
+      |> SourceFile.ast()
+      |> Source.expressions()
 
-  defp collect_exunit_call(node, scope, calls) do
-    case Source.call(node, scope) do
-      {[:ExUnit], name, meta, args} when name in [:start, :configure] ->
-        [{name, meta, args} | calls]
-
-      _ ->
-        calls
+    for {:=, meta, [{name, _, context}, value]} <- assignments,
+        is_atom(name) and is_atom(context),
+        key = {name, context},
+        binding_counts[key] == 1,
+        into: %{} do
+      {key, {position(meta), value}}
     end
   end
 
-  defp configured_timeout({name, meta, [options]}) when is_list(options) do
-    with true <- Keyword.keyword?(options),
+  defp collect_helper_facts({kind, _, _}, _scope, facts)
+       when kind in [:defmodule, :def, :defp, :defmacro, :defmacrop, :fn],
+       do: {:skip, facts}
+
+  defp collect_helper_facts({operator, _, [pattern, _]}, _scope, {calls, counts})
+       when operator in [:=, :<-, :->] do
+    {_, counts} = Macro.prewalk(pattern, counts, &count_binding/2)
+    {calls, counts}
+  end
+
+  defp collect_helper_facts(node, scope, {calls, counts} = facts) do
+    case Source.call(node, scope) do
+      {[:ExUnit], name, meta, args} when name in [:start, :configure] ->
+        {[{name, meta, args} | calls], counts}
+
+      _ ->
+        facts
+    end
+  end
+
+  defp count_binding({name, _, context} = variable, counts)
+       when is_atom(name) and is_atom(context),
+       do: {variable, Map.update(counts, {name, context}, 1, &(&1 + 1))}
+
+  defp count_binding(node, counts), do: {node, counts}
+
+  defp configured_timeout({name, meta, [argument]}, bindings) do
+    with {:ok, options} <- resolve_options(argument, bindings, position(meta)),
          {:ok, value} <- Keyword.fetch(options, :assert_receive_timeout) do
       {value, call_location(name, meta)}
     else
-      _ -> nil
+      :error -> nil
+      :unknown -> :unknown
     end
   end
 
-  defp configured_timeout(_call), do: nil
+  defp configured_timeout(_call, _bindings), do: nil
+
+  defp resolve_options({name, _, context}, bindings, call_position)
+       when is_atom(name) and is_atom(context) do
+    case Map.fetch(bindings, {name, context}) do
+      {:ok, {binding_position, value}} when binding_position < call_position ->
+        literal_options(value)
+
+      _ ->
+        :unknown
+    end
+  end
+
+  defp resolve_options(argument, _bindings, _call_position), do: literal_options(argument)
+
+  defp literal_options(list) when is_list(list) do
+    if Keyword.keyword?(list), do: {:ok, list}, else: :unknown
+  end
+
+  defp literal_options({:++, _, [left, right]}) do
+    with {:ok, left} <- literal_options(left),
+         {:ok, right} <- literal_options(right) do
+      {:ok, left ++ right}
+    end
+  end
+
+  defp literal_options(_argument), do: :unknown
+
+  defp position(meta), do: {meta[:line], meta[:column]}
 
   defp acceptable_default?(value, min_timeout) do
     case literal_integer(value) do

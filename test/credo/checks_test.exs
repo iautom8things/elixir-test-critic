@@ -334,6 +334,62 @@ defmodule TestCritic.Credo.ChecksTest do
     end
   end
 
+  test "receive timeout resolves single assignments to keyword lists and literal concatenations" do
+    check = Check.ShortReceiveTimeout
+    helper = "test/test_helper.exs"
+
+    refute_issues(run("opts = [assert_receive_timeout: 500]\nExUnit.start(opts)", check, helper))
+
+    for options <- [
+          "[assert_receive_timeout: 100]",
+          "[trace: false] ++ [assert_receive_timeout: 100]"
+        ] do
+      "opts = #{options}\nExUnit.configure(opts)"
+      |> run(check, helper)
+      |> assert_issue(%{line_no: 2, trigger: "configure"})
+    end
+  end
+
+  test "receive timeout accepts unresolved helper options" do
+    check = Check.ShortReceiveTimeout
+    helper = "test/test_helper.exs"
+
+    for source <- [
+          """
+          opts = [assert_receive_timeout: 1_000] ++ if ci?(), do: [trace: true], else: []
+          ExUnit.start(opts)
+          """,
+          """
+          opts = [trace: false] ++ if ci?(), do: [assert_receive_timeout: 1_000], else: []
+          ExUnit.start(opts)
+          """,
+          "ExUnit.start(build_options())",
+          "ExUnit.configure(Keyword.put(options, :exclude, [:slow]))",
+          "opts = [assert_receive_timeout: 10]\nopts = build_options()\nExUnit.start(opts)",
+          "opts = [assert_receive_timeout: 10]\n{:ok, opts} = build_options()\nExUnit.start(opts)",
+          """
+          opts = [assert_receive_timeout: 10]
+          case build_options() do
+            opts -> ExUnit.start(opts)
+          end
+          """
+        ] do
+      refute_issues(run(source, check, helper))
+    end
+  end
+
+  test "receive timeout uses the last known setting across helper calls" do
+    """
+    ExUnit.configure(trace: false)
+    ExUnit.configure(assert_receive_timeout: 100)
+    opts = [assert_receive_timeout: 750]
+    ExUnit.configure(opts)
+    ExUnit.start()
+    """
+    |> run(Check.ShortReceiveTimeout, "test/test_helper.exs")
+    |> refute_issues()
+  end
+
   test "sleep reports both spellings under test paths and honors exclusions" do
     check = Check.ProcessSleepInTest
     source = "test \"waits\" do\nProcess.sleep(10)\n10 |> :timer.sleep()\nend"
